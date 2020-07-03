@@ -22,8 +22,7 @@
     "test.js",
     "AutoItX3.dll",
     "AutoItX3_x64.dll",
-    "AutoItX3_DLL.h",
-    "index.d.ts"
+    "AutoItX3_DLL.h"
   ],
   "keywords": [
     "autoit",
