@@ -30,10 +30,10 @@
     "ffi"
   ],
   "dependencies": {
-    "ffi": ">=2.0.0",
-    "ref": ">=1.2.0",
-    "ref-struct": ">=1.0.2",
-    "iconv-lite": ">=0.4.11"
+    "ffi-napi": "^3.0.1",
+    "iconv-lite": "^0.6.1",
+    "ref-napi": "^2.0.3",
+    "ref-struct-di": "^1.1.1"
   },
   "devDependencies": {},
   "readme": "",

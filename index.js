@@ -1,11 +1,9 @@
 'use strict';
 
-var ref = require('ref');
-var ffi = require('ffi');
+var ffi = require('ffi-napi');
 var path = require('path');
-var fs = require('fs');
 var os = require('os');
-var Struct = require('ref-struct');
+var Struct = require('ref-struct-di');
 var wchar_t = require(path.join(__dirname, 'wchar.js'));
 var wchar_string = wchar_t.string;
 
@@ -1399,7 +1397,7 @@ function modify_arg_to_return_value(func){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
             var nBufSize = args[get_ret.ex_arg];
-            var buf = new Buffer(wchar_t.size * nBufSize);
+            var buf = Buffer.alloc(wchar_t.size * nBufSize);
             args[get_ret.arg] = buf;
             old_func.apply(this, args);
             return getWString(buf);
@@ -1432,7 +1430,7 @@ function modify_arg_to_return_value(func){
             var callback = args[args.length - 1];
             args.splice(get_ret.arg, 0, undefined);
             var nBufSize = args[get_ret.ex_arg];
-            var buf = new Buffer(wchar_t.size * nBufSize);
+            var buf = Buffer.alloc(wchar_t.size * nBufSize);
             args[get_ret.arg] = buf;
             
             args[args.length - 1] = function(err){
