@@ -31,8 +31,8 @@
   ],
   "dependencies": {
     "ffi-napi": "^3.0.1",
-    "iconv-lite": "^0.6.1",
-    "ref-napi": "^2.0.3",
+    "iconv-lite": "^0.6.2",
+    "ref-napi": "^3.0.1",
     "ref-struct-di": "^1.1.1"
   },
   "devDependencies": {},
