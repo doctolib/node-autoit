@@ -1,6 +1,6 @@
 {
   "name": "autoit",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "nodejs autoit(x) wrapper",
   "license": "MIT",
   "repository": {
