@@ -3,7 +3,8 @@
 var ffi = require('ffi-napi');
 var path = require('path');
 var os = require('os');
-var Struct = require('ref-struct-di');
+var ref = require('ref-napi')
+var Struct = require('ref-struct-di')(ref);
 var wchar_t = require(path.join(__dirname, 'wchar.js'));
 var wchar_string = wchar_t.string;
 
@@ -1141,7 +1142,7 @@ var autoit_functions = {
     //AU3_API void WINAPI AU3_WinGetClassList(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPWSTR szRetText, int nBufSize);
     'AU3_WinGetClassListByHandle': ['void', [HWND, LPWSTR, 'int']],
     //AU3_API void WINAPI AU3_WinGetClassListByHandle(HWND hWnd, LPWSTR szRetText, int nBufSize);
-    
+
     'AU3_WinGetClientSize': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPRECT]],
     //AU3_API int WINAPI AU3_WinGetClientSize(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPRECT lpRect);
     'AU3_WinGetClientSizeByHandle': ['int', [HWND, LPRECT]],
@@ -1216,8 +1217,8 @@ var autoit_functions = {
     //AU3_API int WINAPI AU3_WinWaitCloseByHandle(HWND hWnd, int nTimeout);
     'AU3_WinWaitNotActive': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
     //AU3_API int WINAPI AU3_WinWaitNotActive(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nTimeout);
-    'AU3_WinWaitNotActiveByHandle': ['int', [HWND, 'int']],    
-    //AU3_API int WINAPI AU3_WinWaitNotActiveByHandle(HWND hWnd, int nTimeout = 0);    
+    'AU3_WinWaitNotActiveByHandle': ['int', [HWND, 'int']],
+    //AU3_API int WINAPI AU3_WinWaitNotActiveByHandle(HWND hWnd, int nTimeout = 0);
 };
 
 var def_args = {
@@ -1349,7 +1350,7 @@ function modify_func(func){
         return old_func.apply(this, arguments);
     }
     $[func].async = function(){
-        return old_func.async.apply(this, arguments);    
+        return old_func.async.apply(this, arguments);
     }
 }
 
@@ -1377,7 +1378,7 @@ function modify_def_args(func){
             if(args[i] === undefined) args[i] = get_args[i];
         }
         return old_func.async.apply(this, args);
-    }    
+    }
 }
 
 function getWString(buf){
@@ -1391,7 +1392,7 @@ function getWString(buf){
 function modify_arg_to_return_value(func){
     var old_func = $[func];
     var get_ret = arg_to_return_value[func];
-    
+
     $[func] = function(){
         if(get_ret.type == 'wstring'){
             var args = Array.prototype.slice.call(arguments);
@@ -1423,7 +1424,7 @@ function modify_arg_to_return_value(func){
         else
             console.log('unknown return type ' + get_ret.type);
     }
-    
+
     $[func].async = function(){
         if(get_ret.type == 'wstring'){
             var args = Array.prototype.slice.call(arguments);
@@ -1432,7 +1433,7 @@ function modify_arg_to_return_value(func){
             var nBufSize = args[get_ret.ex_arg];
             var buf = Buffer.alloc(wchar_t.size * nBufSize);
             args[get_ret.arg] = buf;
-            
+
             args[args.length - 1] = function(err){
                 if(err) callback(err)
                 else callback(err, getWString(buf));
@@ -1446,7 +1447,7 @@ function modify_arg_to_return_value(func){
             var rect = new RECT();
             var buf = rect.ref();
             args[get_ret.arg] = buf;
-            
+
             args[args.length - 1] = function(err){
                 if(err) callback(err)
                 else callback(err, rect);
@@ -1460,7 +1461,7 @@ function modify_arg_to_return_value(func){
             var point = new POINT();
             var buf = point.ref();
             args[get_ret.arg] = buf;
-            
+
             args[args.length - 1] = function(err){
                 if(err) callback(err)
                 else callback(err, point);
@@ -1481,7 +1482,7 @@ function modify_byhande_func(func){
     var byname_func = func.substr(0, func.length - appendix.length);
     if($[byname_func] === undefined) return;
     //console.log(byname_func + '   ' + func);
-    
+
     var old_func = $[byname_func];
     $[byname_func] = function(){
         if(typeof arguments[0] === 'number')
@@ -1493,7 +1494,7 @@ function modify_byhande_func(func){
         if(typeof arguments[0] === 'number')
             return $[func].apply(this, arguments);
         else
-            return old_func.async.apply(this, arguments);    
+            return old_func.async.apply(this, arguments);
     }
 }
 
