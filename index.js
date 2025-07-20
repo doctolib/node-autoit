@@ -1,10 +1,8 @@
 'use strict';
 
-var ffi = require('ffi-napi');
+var koffi = require('koffi');
 var path = require('path');
 var os = require('os');
-var ref = require('ref-napi')
-var Struct = require('ref-struct-di')(ref);
 var wchar_t = require(path.join(__dirname, 'wchar.js'));
 var wchar_string = wchar_t.string;
 
@@ -28,14 +26,14 @@ var LPCWSTR = wchar_string;
 var LPRECT = 'pointer';
 var LPPOINT = 'pointer';
 
-var RECT = Struct({
+var RECT = koffi.struct('RECT', {
     'left': LONG,
     'top': LONG,
     'right': LONG,
     'bottom': LONG,
 });
 
-var POINT = Struct({
+var POINT = koffi.struct('POINT', {
     'x': LONG,
     'y': LONG,
 });
@@ -1340,18 +1338,17 @@ var dll = get_dll();
 if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
-var autoit_dll = ffi.Library(path.join(process.cwd(), dll), autoit_functions);
+var autoit_lib = koffi.load(path.join(process.cwd(), dll));
 
 function modify_func(func){
-    var old_func = autoit_dll[func];
-    //$[func] = old_func;
+    var func_def = autoit_functions[func];
+    var koffi_func = autoit_lib.func(func, func_def[0], func_def[1]);
     func = func.substr(4);   //Remove "AU3_"
     $[func] = function(){
-        return old_func.apply(this, arguments);
+        return koffi_func.apply(this, arguments);
     }
-    $[func].async = function(){
-        return old_func.async.apply(this, arguments);
-    }
+    // Note: koffi doesn't have async methods like ffi-napi
+    $[func].async = $[func]; // For compatibility, just use the same function
 }
 
 function modify_def_args(func){
@@ -1372,12 +1369,26 @@ function modify_def_args(func){
     }
 
     $[func].async = function(){
+        // Note: koffi doesn't have built-in async, so we'll use the sync version
         var args = Array.prototype.slice.call(arguments);
+        var callback = args.pop(); // remove callback from args
+        
         for(var i in get_args){
-            while(i >= args.length) args.push(undefined);
-            if(args[i] === undefined) args[i] = get_args[i];
+            var j = (return_arg >= 0 && i >= return_arg ? i - 1 : i);
+            while(j >= args.length) args.push(undefined);
+            if(args[j] === undefined) args[j] = get_args[i];
         }
-        return old_func.async.apply(this, args);
+        
+        try {
+            var result = $[func].apply(this, args);
+            process.nextTick(function() {
+                callback(null, result);
+            });
+        } catch (err) {
+            process.nextTick(function() {
+                callback(err);
+            });
+        }
     }
 }
 
@@ -1406,18 +1417,16 @@ function modify_arg_to_return_value(func){
         else if(get_ret.type == 'rect'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var rect = new RECT();
-            var buf = rect.ref();
-            args[get_ret.arg] = buf;
+            var rect = {}; // koffi handles structs as plain objects
+            args[get_ret.arg] = rect;
             old_func.apply(this, args);
             return rect;
         }
         else if(get_ret.type == 'point'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var point = new POINT();
-            var buf = point.ref();
-            args[get_ret.arg] = buf;
+            var point = {}; // koffi handles structs as plain objects
+            args[get_ret.arg] = point;
             old_func.apply(this, args);
             return point;
         }
@@ -1426,50 +1435,22 @@ function modify_arg_to_return_value(func){
     }
 
     $[func].async = function(){
-        if(get_ret.type == 'wstring'){
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
-            args.splice(get_ret.arg, 0, undefined);
-            var nBufSize = args[get_ret.ex_arg];
-            var buf = Buffer.alloc(wchar_t.size * nBufSize);
-            args[get_ret.arg] = buf;
-
-            args[args.length - 1] = function(err){
-                if(err) callback(err)
-                else callback(err, getWString(buf));
-            }
-            return old_func.async.apply(this, args);
+        // Note: koffi doesn't have built-in async, so we'll use the sync version
+        // For compatibility, we'll wrap it in a Promise for async behavior
+        var args = Array.prototype.slice.call(arguments);
+        var callback = args.pop(); // remove callback from args
+        
+        try {
+            var result = $[func].apply(this, args);
+            // Call callback with result in next tick to simulate async behavior
+            process.nextTick(function() {
+                callback(null, result);
+            });
+        } catch (err) {
+            process.nextTick(function() {
+                callback(err);
+            });
         }
-        else if(get_ret.type == 'rect'){
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
-            args.splice(get_ret.arg, 0, undefined);
-            var rect = new RECT();
-            var buf = rect.ref();
-            args[get_ret.arg] = buf;
-
-            args[args.length - 1] = function(err){
-                if(err) callback(err)
-                else callback(err, rect);
-            }
-            return old_func.async.apply(this, args);
-        }
-        else if(get_ret.type == 'point'){
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
-            args.splice(get_ret.arg, 0, undefined);
-            var point = new POINT();
-            var buf = point.ref();
-            args[get_ret.arg] = buf;
-
-            args[args.length - 1] = function(err){
-                if(err) callback(err)
-                else callback(err, point);
-            }
-            return old_func.async.apply(this, args);
-        }
-        else
-            console.log('unknown return type ' + get_ret.type);
     }
 }
 
@@ -1514,29 +1495,24 @@ for(var func in autoit_functions){
 
 
 
-var user32dll_handle = ffi.DynamicLibrary('user32.dll');
-var symbol = user32dll_handle.get('PostMessageW');
-var PostMessage = ffi.ForeignFunction(symbol, 'int', [HWND, UINT, WPARAM, LPARAM]);
+var user32dll = koffi.load('user32.dll');
+var PostMessage = user32dll.func('PostMessageW', 'int', [HWND, UINT, WPARAM, LPARAM]);
 $.PostMessage = function(hWnd, msg, wParam, lParam){
     if(wParam === undefined) wParam = 0;
     if(lParam === undefined) lParam = 0;
     return PostMessage(hWnd, msg, wParam, lParam);
 }
 
-var symbol = user32dll_handle.get('SendMessageW');
-var SendMessage = ffi.ForeignFunction(symbol, 'int', [HWND, UINT, WPARAM, LPARAM]);
+var SendMessage = user32dll.func('SendMessageW', 'int', [HWND, UINT, WPARAM, LPARAM]);
 $.SendMessage = function(hWnd, msg, wParam, lParam){
     if(wParam === undefined) wParam = 0;
     if(lParam === undefined) lParam = 0;
     return SendMessage(hWnd, msg, wParam, lParam);
 }
 
-var symbol = user32dll_handle.get('GetDlgCtrlID');
-$.GetDlgCtrlID = ffi.ForeignFunction(symbol, 'int', [HWND]);
+$.GetDlgCtrlID = user32dll.func('GetDlgCtrlID', 'int', [HWND]);
 
 $.RECT = RECT;
 $.POINT = POINT;
-
-$.user32dll_handle = user32dll_handle;
 
 module.exports = $;
