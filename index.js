@@ -16,15 +16,13 @@ function get_dll(){
 
 // Types
 var HWND = 'int';
-var LPWSTR = 'pointer';
+var LPWSTR = 'str16';   // koffi UTF-16 string type for Windows wide strings
 var DWORD = 'uint32';
 var UINT = 'uint32';
 var LONG = 'long';
 var WPARAM = 'uint32';
 var LPARAM = 'uint32';
-var LPCWSTR = wchar_string;
-var LPRECT = 'pointer';
-var LPPOINT = 'pointer';
+var LPCWSTR = 'str16';  // koffi UTF-16 string type for Windows wide strings
 
 var RECT = koffi.struct('RECT', {
     'left': LONG,
@@ -37,6 +35,9 @@ var POINT = koffi.struct('POINT', {
     'x': LONG,
     'y': LONG,
 });
+
+var LPRECT = RECT;      // koffi struct pointer
+var LPPOINT = POINT;    // koffi struct pointer
 
 var $ = {};
 
