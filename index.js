@@ -1339,17 +1339,16 @@ var dll = get_dll();
 if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
-var autoit_lib = koffi.load(path.join(process.cwd(), dll));
+var autoit = koffi.load(path.join(process.cwd(), dll));
 
 function modify_func(func){
     var func_def = autoit_functions[func];
-    var koffi_func = autoit_lib.func(func, func_def[0], func_def[1]);
+    var koffi_func = autoit.func(func, func_def[0], func_def[1]);
     func = func.substr(4);   //Remove "AU3_"
     $[func] = function(){
         return koffi_func.apply(this, arguments);
     }
-    // Note: koffi doesn't have async methods like ffi-napi
-    $[func].async = $[func]; // For compatibility, just use the same function
+    $[func].async = $[func];
 }
 
 function modify_def_args(func){
