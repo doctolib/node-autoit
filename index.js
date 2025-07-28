@@ -4,13 +4,11 @@ var koffi = require('koffi');
 var path = require('path');
 var os = require('os');
 var wchar_t = require(path.join(__dirname, 'wchar.js'));
-var wchar_string = wchar_t.string;
 
 function get_dll(){
     switch(os.arch()){
     case 'ia32': return 'AutoItX3.dll';
     case 'x64': return 'AutoItX3_x64.dll';
-    case 'arm64': return 'AutoItX3_x64.dll'; // For testing type definitions only
     }
     return null;
 }
@@ -37,8 +35,8 @@ var POINT = koffi.struct('POINT', {
     'y': LONG,
 });
 
-var LPRECT = koffi.pointer(RECT);      // koffi struct pointer
-var LPPOINT = koffi.pointer(POINT);    // koffi struct pointer
+var LPRECT = 'void*';      // Use void* for struct pointers in function signatures
+var LPPOINT = 'void*';    // Use void* for struct pointers in function signatures
 
 var $ = {};
 
@@ -1340,7 +1338,7 @@ var dll = get_dll();
 if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
-var autoit = koffi.load(path.join(process.cwd(), dll));
+var autoit = koffi.load(path.join(__dirname, dll));
 
 function modify_func(func){
     var func_def = autoit_functions[func];
@@ -1418,18 +1416,18 @@ function modify_arg_to_return_value(func){
         else if(get_ret.type == 'rect'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var rect = {}; // koffi handles structs as plain objects
+            var rect = koffi.alloc(RECT); // Allocate struct buffer
             args[get_ret.arg] = rect;
             old_func.apply(this, args);
-            return rect;
+            return koffi.decode(rect, RECT); // Decode struct from buffer
         }
         else if(get_ret.type == 'point'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var point = {}; // koffi handles structs as plain objects
+            var point = koffi.alloc(POINT); // Allocate struct buffer
             args[get_ret.arg] = point;
             old_func.apply(this, args);
-            return point;
+            return koffi.decode(point, POINT); // Decode struct from buffer
         }
         else
             console.log('unknown return type ' + get_ret.type);
