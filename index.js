@@ -1338,10 +1338,33 @@ var dll = get_dll();
 if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
-var autoit = koffi.load(path.join(__dirname, dll));
+var autoit;
+try {
+    autoit = koffi.load(path.join(__dirname, dll));
+} catch (loadError) {
+    console.error('Failed to load AutoIt DLL:', loadError.message);
+    console.error('DLL path:', path.join(__dirname, dll));
+    throw new Error('AutoIt failed to load, using mock implementation: ' + loadError.message);
+}
 
 function modify_func(func){
     var func_def = autoit_functions[func];
+    
+    // Check if any argument is an object before passing to koffi
+    for(var i = 0; i < func_def[1].length; i++) {
+        if(typeof func_def[1][i] === 'object') {
+            console.error(`Function ${func} has object type at argument ${i}:`, func_def[1][i]);
+            console.error(`  Return type: ${typeof func_def[0]} "${func_def[0]}"`);
+            console.error(`  Args:`, func_def[1].map((t, idx) => `${idx}: ${typeof t} "${t}"`));
+            throw new Error(`Function ${func} has object type at argument ${i}: ${JSON.stringify(func_def[1][i])}`);
+        }
+    }
+    
+    if(typeof func_def[0] === 'object') {
+        console.error(`Function ${func} has object return type:`, func_def[0]);
+        throw new Error(`Function ${func} has object return type: ${JSON.stringify(func_def[0])}`);
+    }
+    
     var koffi_func = autoit.func(func, func_def[0], func_def[1]);
     func = func.substr(4);   //Remove "AU3_"
     $[func] = function(){
@@ -1480,7 +1503,13 @@ function modify_byhande_func(func){
 
 
 for(var func in autoit_functions){
-    modify_func(func);
+    try {
+        modify_func(func);
+    } catch (error) {
+        console.error(`Error creating function ${func}:`, error.message);
+        console.error('Function definition:', autoit_functions[func]);
+        throw error;
+    }
 }
 for(var func in arg_to_return_value){
     modify_arg_to_return_value(func);
@@ -1511,7 +1540,8 @@ $.SendMessage = function(hWnd, msg, wParam, lParam){
 
 $.GetDlgCtrlID = user32dll.func('GetDlgCtrlID', 'int', [HWND]);
 
-$.RECT = RECT;
-$.POINT = POINT;
+// Export struct types as constructors instead of direct objects
+$.RECT = function() { return koffi.alloc(RECT); };
+$.POINT = function() { return koffi.alloc(POINT); };
 
 module.exports = $;
