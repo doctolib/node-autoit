@@ -30,10 +30,9 @@
     "koffi"
   ],
   "dependencies": {
-    "koffi": "^2.12.2",
-    "iconv-lite": "^0.6.2"
+    "iconv-lite": "^0.6.2",
+    "koffi": "^2.12.2"
   },
-  "devDependencies": {},
   "readme": "",
   "readmeFilename": "readme.md",
   "bugs": {

@@ -10,6 +10,7 @@ function get_dll(){
     switch(os.arch()){
     case 'ia32': return 'AutoItX3.dll';
     case 'x64': return 'AutoItX3_x64.dll';
+    case 'arm64': return 'AutoItX3_x64.dll'; // For testing type definitions only
     }
     return null;
 }
@@ -19,7 +20,7 @@ var HWND = 'int';
 var LPWSTR = 'str16';   // koffi UTF-16 string type for Windows wide strings
 var DWORD = 'uint32';
 var UINT = 'uint32';
-var LONG = 'long';
+var LONG = 'int32';  // Windows LONG is 32-bit signed integer
 var WPARAM = 'uint32';
 var LPARAM = 'uint32';
 var LPCWSTR = 'str16';  // koffi UTF-16 string type for Windows wide strings
@@ -36,8 +37,8 @@ var POINT = koffi.struct('POINT', {
     'y': LONG,
 });
 
-var LPRECT = RECT;      // koffi struct pointer
-var LPPOINT = POINT;    // koffi struct pointer
+var LPRECT = koffi.pointer(RECT);      // koffi struct pointer
+var LPPOINT = koffi.pointer(POINT);    // koffi struct pointer
 
 var $ = {};
 
@@ -1080,7 +1081,7 @@ var autoit_functions = {
     'AU3_Opt': ['int', [LPCWSTR, 'int']],
     //AU3_API int WINAPI AU3_Opt(LPCWSTR szOption, int nValue);
 
-    'AU3_PixelChecksum': ['uint', [LPRECT, 'int']],
+    'AU3_PixelChecksum': ['uint32', [LPRECT, 'int']],
     //AU3_API unsigned int WINAPI AU3_PixelChecksum(LPRECT lpRect, int nStep = 1);
     'AU3_PixelGetColor': ['int', ['int', 'int']],
     //AU3_API int WINAPI AU3_PixelGetColor(int nX, int nY);
