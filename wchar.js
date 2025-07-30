@@ -83,25 +83,8 @@ exports = module.exports = {
  * Simplified string type for koffi compatibility.
  */
 
-exports.string = {
-  name: 'WCString',
-  get: function get (buf, offset) {
-    // For koffi, we'll work with direct buffer manipulation
-    if (!buf || buf.length === 0) {
-      return null;
-    }
-    return exports.toString(buf);
-  },
-  set: function set (buf, offset, val) {
-    var _buf = val; // val is a Buffer? it better be \0 terminated...
-    if ('string' == typeof val) {
-      //_buf = setter.convert(val + '\0');
-      _buf = iconv.encode(val + '\0', wchar_encoding);
-    }
-    // For koffi compatibility, we'll return the buffer
-    return _buf;
-  }
-};
+// For koffi compatibility, just export a simple string type
+exports.string = 'str';
 
 /**
  * Turns a `wchar_t *` Buffer instance into a JavaScript String instance.
