@@ -14,14 +14,7 @@ function get_dll(){
 }
 
 // Types
-var HWND = 'int';
-var LPWSTR = 'str16';   // koffi UTF-16 string type for Windows wide strings
-var DWORD = 'uint32';
-var UINT = 'uint32';
-var LONG = 'int32';  // Windows LONG is 32-bit signed integer
-var WPARAM = 'uint32';
-var LPARAM = 'uint32';
-var LPCWSTR = 'str16';  // koffi UTF-16 string type for Windows wide strings
+var LONG = 'int32';  // Windows LONG is 32-bit signed integer (used in structs)
 
 var RECT = koffi.struct('RECT', {
     'left': LONG,
@@ -35,8 +28,7 @@ var POINT = koffi.struct('POINT', {
     'y': LONG,
 });
 
-var LPRECT = 'void*';      // Use void* for struct pointers in function signatures
-var LPPOINT = 'void*';    // Use void* for struct pointers in function signatures
+// Struct pointer types are now handled directly as 'void*' in function signatures
 
 var $ = {};
 
@@ -969,255 +961,66 @@ $.OBJID_MENU = 0xFFFFFFFD
 
 
 
-// Definitions
-var AU3_INTDEFAULT = -2147483647;	// "Default" value for _some_ int parameters (largest negative number)
 
-var autoit_functions = {
-    'AU3_Init': ['void', []],
-    //AU3_API void WINAPI AU3_Init(void);
-    'AU3_error': ['int', []],
-    //AU3_API int AU3_error(void);
-    'AU3_AutoItSetOption': ['int', [LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_AutoItSetOption(LPCWSTR szOption, int nValue);
-    'AU3_ClipGet': ['void', [LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ClipGet(LPWSTR szClip, int nBufSize);
-    'AU3_ClipPut': ['void', [LPCWSTR]],
-    //AU3_API void WINAPI AU3_ClipPut(LPCWSTR szClip);
 
-    'AU3_ControlClick': ['int', [LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_ControlClick(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPCWSTR szButton, int nNumClicks, int nX = AU3_INTDEFAULT, int nY = AU3_INTDEFAULT);
-    'AU3_ControlClickByHandle': ['int', [HWND, HWND, LPCWSTR, 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_ControlClickByHandle(HWND hWnd, HWND hCtrl, LPCWSTR szButton, int nNumClicks, int nX = AU3_INTDEFAULT, int nY = AU3_INTDEFAULT);
-    'AU3_ControlCommand': ['void', [LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlCommand(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPCWSTR szCommand, LPCWSTR szExtra, LPWSTR szResult, int nBufSize);
-    'AU3_ControlCommandByHandle': ['void', [HWND, HWND, LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlCommandByHandle(HWND hWnd, HWND hCtrl, LPCWSTR szCommand, LPCWSTR szExtra, LPWSTR szResult, int nBufSize);
-    'AU3_ControlListView': ['void', [LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlListView(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPCWSTR szCommand, LPCWSTR szExtra1, LPCWSTR szExtra2, LPWSTR szResult, int nBufSize);
-    'AU3_ControlListViewByHandle': ['void', [HWND, HWND, LPCWSTR, LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlListViewByHandle(HWND hWnd, HWND hCtrl, LPCWSTR szCommand, LPCWSTR szExtra1, LPCWSTR szExtra2, LPWSTR szResult, int nBufSize);
-    'AU3_ControlDisable': ['int', [LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_ControlDisable(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl);
-    'AU3_ControlDisableByHandle': ['int', [HWND, HWND]],
-    //AU3_API int WINAPI AU3_ControlDisableByHandle(HWND hWnd, HWND hCtrl);
-    'AU3_ControlEnable': ['int', [LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_ControlEnable(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl);
-    'AU3_ControlEnableByHandle': ['int', [HWND, HWND]],
-    //AU3_API int WINAPI AU3_ControlEnableByHandle(HWND hWnd, HWND hCtrl);
-    'AU3_ControlFocus': ['int', [LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_ControlFocus(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl);
-    'AU3_ControlFocusByHandle': ['int', [HWND, HWND]],
-    //AU3_API int WINAPI AU3_ControlFocusByHandle(HWND hWnd, HWND hCtrl);
-    'AU3_ControlGetFocus': ['void', [LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlGetFocus(LPCWSTR szTitle, LPCWSTR szText, LPWSTR szControlWithFocus, int nBufSize);
-    'AU3_ControlGetFocusByHandle': ['void', [HWND, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlGetFocusByHandle(HWND hWnd, LPWSTR szControlWithFocus, int nBufSize);
-    'AU3_ControlGetHandle': [HWND, [HWND, LPCWSTR]],
-    //AU3_API HWND WINAPI AU3_ControlGetHandle(HWND hWnd, LPCWSTR szControl);
-    'AU3_ControlGetHandleAsText': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlGetHandleAsText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPCWSTR szControl, LPWSTR szRetText, int nBufSize);
-    'AU3_ControlGetPos': ['int', [LPCWSTR, LPCWSTR, LPCWSTR, LPRECT]],
-    //AU3_API int WINAPI AU3_ControlGetPos(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPRECT lpRect);
-    'AU3_ControlGetPosByHandle': ['int', [HWND, HWND, LPRECT]],
-    //AU3_API int WINAPI AU3_ControlGetPosByHandle(HWND hWnd, HWND hCtrl, LPRECT lpRect);
-    'AU3_ControlGetText': ['void', [LPCWSTR, LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlGetText(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPWSTR szControlText, int nBufSize);
-    'AU3_ControlGetTextByHandle': ['void', [HWND, HWND, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlGetTextByHandle(HWND hWnd, HWND hCtrl, LPWSTR szControlText, int nBufSize);
-    'AU3_ControlHide': ['int', [LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_ControlHide(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl);
-    'AU3_ControlHideByHandle': ['int', [HWND, HWND]],
-    //AU3_API int WINAPI AU3_ControlHideByHandle(HWND hWnd, HWND hCtrl);
-    'AU3_ControlMove': ['int', [LPCWSTR, LPCWSTR, LPCWSTR, 'int', 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_ControlMove(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, int nX, int nY, int nWidth = -1, int nHeight = -1);
-    'AU3_ControlMoveByHandle': ['int', [HWND, HWND, 'int', 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_ControlMoveByHandle(HWND hWnd, HWND hCtrl, int nX, int nY, int nWidth = -1, int nHeight = -1);
-    'AU3_ControlSend': ['int', [LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_ControlSend(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPCWSTR szSendText, int nMode = 0);
-    'AU3_ControlSendByHandle': ['int', [HWND, HWND, LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_ControlSendByHandle(HWND hWnd, HWND hCtrl, LPCWSTR szSendText, int nMode = 0);
-    'AU3_ControlSetText': ['int', [LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_ControlSetText(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPCWSTR szControlText);
-    'AU3_ControlSetTextByHandle': ['int', [HWND, HWND, LPCWSTR]],
-    //AU3_API int WINAPI AU3_ControlSetTextByHandle(HWND hWnd, HWND hCtrl, LPCWSTR szControlText);
-    'AU3_ControlShow': ['int', [LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_ControlShow(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl);
-    'AU3_ControlShowByHandle': ['int', [HWND, HWND]],
-    //AU3_API int WINAPI AU3_ControlShowByHandle(HWND hWnd, HWND hCtrl);
-    'AU3_ControlTreeView': ['void', [LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlTreeView(LPCWSTR szTitle, LPCWSTR szText, LPCWSTR szControl, LPCWSTR szCommand, LPCWSTR szExtra1, LPCWSTR szExtra2, LPWSTR szResult, int nBufSize);
-    'AU3_ControlTreeViewByHandle': ['void', [HWND, HWND, LPCWSTR, LPCWSTR, LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_ControlTreeViewByHandle(HWND hWnd, HWND hCtrl, LPCWSTR szCommand, LPCWSTR szExtra1, LPCWSTR szExtra2, LPWSTR szResult, int nBufSize);
 
-    'AU3_DriveMapAdd': ['void', [LPCWSTR, LPCWSTR, 'int', /*[in,defaultvalue("")]*/LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_DriveMapAdd(LPCWSTR szDevice, LPCWSTR szShare, int nFlags, /*[in,defaultvalue("")]*/LPCWSTR szUser, /*[in,defaultvalue("")]*/LPCWSTR szPwd, LPWSTR szResult, int nBufSize);
-    'AU3_DriveMapDel': ['int', [LPCWSTR]],
-    //AU3_API int WINAPI AU3_DriveMapDel(LPCWSTR szDevice);
-    'AU3_DriveMapGet': ['void', [LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_DriveMapGet(LPCWSTR szDevice, LPWSTR szMapping, int nBufSize);
 
-    'AU3_IsAdmin': ['int', []],
-    //AU3_API int WINAPI AU3_IsAdmin(void);
 
-    'AU3_MouseClick': ['int', [/*[in,defaultvalue("LEFT")]*/LPCWSTR, 'int', 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_MouseClick(/*[in,defaultvalue("LEFT")]*/LPCWSTR szButton, int nX = AU3_INTDEFAULT, int nY = AU3_INTDEFAULT, int nClicks = 1, int nSpeed = -1);
-    'AU3_MouseClickDrag': ['int', [LPCWSTR, 'int', 'int', 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_MouseClickDrag(LPCWSTR szButton, int nX1, int nY1, int nX2, int nY2, int nSpeed = -1);
-    'AU3_MouseDown': ['void', [/*[in,defaultvalue("LEFT")]*/LPCWSTR]],
-    //AU3_API void WINAPI AU3_MouseDown(/*[in,defaultvalue("LEFT")]*/LPCWSTR szButton);
-    'AU3_MouseGetCursor': ['int', []],
-    //AU3_API int WINAPI AU3_MouseGetCursor(void);
-    'AU3_MouseGetPos': ['void', [LPPOINT]],
-    //AU3_API void WINAPI AU3_MouseGetPos(LPPOINT lpPoint);
-    'AU3_MouseMove': ['int', ['int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_MouseMove(int nX, int nY, int nSpeed = -1);
-    'AU3_MouseUp': ['void', [/*[in,defaultvalue("LEFT")]*/LPCWSTR]],
-    //AU3_API void WINAPI AU3_MouseUp(/*[in,defaultvalue("LEFT")]*/LPCWSTR szButton);
-    'AU3_MouseWheel': ['void', [LPCWSTR, 'int']],
-    //AU3_API void WINAPI AU3_MouseWheel(LPCWSTR szDirection, int nClicks);
 
-    'AU3_Opt': ['int', [LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_Opt(LPCWSTR szOption, int nValue);
 
-    'AU3_PixelChecksum': ['uint32', [LPRECT, 'int']],
-    //AU3_API unsigned int WINAPI AU3_PixelChecksum(LPRECT lpRect, int nStep = 1);
-    'AU3_PixelGetColor': ['int', ['int', 'int']],
-    //AU3_API int WINAPI AU3_PixelGetColor(int nX, int nY);
-    'AU3_PixelSearch': ['void', [LPRECT, 'int', /*default 0*/'int', /*default 1*/'int', LPPOINT]],
-    //AU3_API void WINAPI AU3_PixelSearch(LPRECT lpRect, int nCol, /*default 0*/int nVar, /*default 1*/int nStep, LPPOINT pPointResult);
-    'AU3_ProcessClose': ['int', [LPCWSTR]],
-    //AU3_API int WINAPI AU3_ProcessClose(LPCWSTR szProcess);
-    'AU3_ProcessExists': ['int', [LPCWSTR]],
-    //AU3_API int WINAPI AU3_ProcessExists(LPCWSTR szProcess);
-    'AU3_ProcessSetPriority': ['int', [LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_ProcessSetPriority(LPCWSTR szProcess, int nPriority);
-    'AU3_ProcessWait': ['int', [LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_ProcessWait(LPCWSTR szProcess, int nTimeout = 0);
-    'AU3_ProcessWaitClose': ['int', [LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_ProcessWaitClose(LPCWSTR szProcess, int nTimeout = 0);
 
-    'AU3_Run': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_Run(LPCWSTR szProgram, /*[in,defaultvalue("")]*/LPCWSTR szDir, int nShowFlag = SW_SHOWNORMAL);
-    'AU3_RunWait': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_RunWait(LPCWSTR szProgram, /*[in,defaultvalue("")]*/LPCWSTR szDir, int nShowFlag = SW_SHOWNORMAL);
-    'AU3_RunAs': ['int', [LPCWSTR, LPCWSTR, LPCWSTR, 'int', LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_RunAs(LPCWSTR szUser, LPCWSTR szDomain, LPCWSTR szPassword, int nLogonFlag, LPCWSTR szProgram, /*[in,defaultvalue("")]*/LPCWSTR szDir, int nShowFlag = SW_SHOWNORMAL);
-    'AU3_RunAsWait': ['int', [LPCWSTR, LPCWSTR, LPCWSTR, 'int', LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_RunAsWait(LPCWSTR szUser, LPCWSTR szDomain, LPCWSTR szPassword, int nLogonFlag, LPCWSTR szProgram, /*[in,defaultvalue("")]*/LPCWSTR szDir, int nShowFlag = SW_SHOWNORMAL);
 
-    'AU3_Send': ['void', [LPCWSTR, 'int']],
-    //AU3_API void WINAPI AU3_Send(LPCWSTR szSendText, int nMode = 0);
-    'AU3_Shutdown': ['int', ['int']],
-    //AU3_API int WINAPI AU3_Shutdown(int nFlags);
-    'AU3_Sleep': ['void', ['int']],
-    //AU3_API void WINAPI AU3_Sleep(int nMilliseconds);
-    'AU3_StatusbarGetText': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, /*[in,defaultvalue(1)]*/'int', LPWSTR, 'int']],
-    //AU3_API int WINAPI AU3_StatusbarGetText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, /*[in,defaultvalue(1)]*/int nPart, LPWSTR szStatusText, int nBufSize);
-    'AU3_StatusbarGetTextByHandle': ['int', [HWND, /*[in,defaultvalue(1)]*/'int', LPWSTR, 'int']],
-    //AU3_API int WINAPI AU3_StatusbarGetTextByHandle(HWND hWnd, /*[in,defaultvalue(1)]*/int nPart, LPWSTR szStatusText, int nBufSize);
 
-    'AU3_ToolTip': ['void', [LPCWSTR, 'int', 'int']],
-    //AU3_API void WINAPI AU3_ToolTip(LPCWSTR szTip, int nX = AU3_INTDEFAULT, int nY = AU3_INTDEFAULT);
-    'AU3_WinActivate': ['int', [LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinActivate(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinActivateByHandle': ['int', [HWND]],
-    //AU3_API int WINAPI AU3_WinActivateByHandle(HWND hWnd);
-    'AU3_WinActive': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinActive(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinActiveByHandle': ['int', [HWND]],
-    //AU3_API int WINAPI AU3_WinActiveByHandle(HWND hWnd);
-    'AU3_WinClose': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinClose(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinCloseByHandle': ['int', [HWND]],
-    //AU3_API int WINAPI AU3_WinCloseByHandle(HWND hWnd);
-    'AU3_WinExists': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinExists(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinExistsByHandle': ['int', [HWND]],
-    //AU3_API int WINAPI AU3_WinExistsByHandle(HWND hWnd);
-    'AU3_WinGetCaretPos': ['int', [LPPOINT]],
-    //AU3_API int WINAPI AU3_WinGetCaretPos(LPPOINT lpPoint);
-    'AU3_WinGetClassList': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_WinGetClassList(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPWSTR szRetText, int nBufSize);
-    'AU3_WinGetClassListByHandle': ['void', [HWND, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_WinGetClassListByHandle(HWND hWnd, LPWSTR szRetText, int nBufSize);
 
-    'AU3_WinGetClientSize': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPRECT]],
-    //AU3_API int WINAPI AU3_WinGetClientSize(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPRECT lpRect);
-    'AU3_WinGetClientSizeByHandle': ['int', [HWND, LPRECT]],
-    //AU3_API int WINAPI AU3_WinGetClientSizeByHandle(HWND hWnd, LPRECT lpRect);
-    'AU3_WinGetHandle': [HWND, [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
-    //AU3_API HWND WINAPI AU3_WinGetHandle(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinGetHandleAsText': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_WinGetHandleAsText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPWSTR szRetText, int nBufSize);
-    'AU3_WinGetPos': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPRECT]],
-    //AU3_API int WINAPI AU3_WinGetPos(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPRECT lpRect);
-    'AU3_WinGetPosByHandle': ['int', [HWND, LPRECT]],
-    //AU3_API int WINAPI AU3_WinGetPosByHandle(HWND hWnd, LPRECT lpRect);
-    'AU3_WinGetProcess': [DWORD, [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
-    //AU3_API DWORD WINAPI AU3_WinGetProcess(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinGetProcessByHandle': [DWORD, [HWND]],
-    //AU3_API DWORD WINAPI AU3_WinGetProcessByHandle(HWND hWnd);
-    'AU3_WinGetState': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinGetState(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinGetStateByHandle': ['int', [HWND]],
-    //AU3_API int WINAPI AU3_WinGetStateByHandle(HWND hWnd);
-    'AU3_WinGetText': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_WinGetText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPWSTR szRetText, int nBufSize);
-    'AU3_WinGetTextByHandle': ['void', [HWND, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_WinGetTextByHandle(HWND hWnd, LPWSTR szRetText, int nBufSize);
-    'AU3_WinGetTitle': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_WinGetTitle(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPWSTR szRetText, int nBufSize);
-    'AU3_WinGetTitleByHandle': ['void', [HWND, LPWSTR, 'int']],
-    //AU3_API void WINAPI AU3_WinGetTitleByHandle(HWND hWnd, LPWSTR szRetText, int nBufSize);
-    'AU3_WinKill': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinKill(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinKillByHandle': ['int', [HWND]],
-    //AU3_API int WINAPI AU3_WinKillByHandle(HWND hWnd);
-    'AU3_WinMenuSelectItem': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinMenuSelectItem(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPCWSTR szItem1, LPCWSTR szItem2, LPCWSTR szItem3, LPCWSTR szItem4, LPCWSTR szItem5, LPCWSTR szItem6, LPCWSTR szItem7, LPCWSTR szItem8);
-    'AU3_WinMenuSelectItemByHandle': ['int', [HWND, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinMenuSelectItemByHandle(HWND hWnd, LPCWSTR szItem1, LPCWSTR szItem2, LPCWSTR szItem3, LPCWSTR szItem4, LPCWSTR szItem5, LPCWSTR szItem6, LPCWSTR szItem7, LPCWSTR szItem8);
-    'AU3_WinMinimizeAll': ['void', []],
-    //AU3_API void WINAPI AU3_WinMinimizeAll();
-    'AU3_WinMinimizeAllUndo': ['void', []],
-    //AU3_API void WINAPI AU3_WinMinimizeAllUndo();
-    'AU3_WinMove': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int', 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_WinMove(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nX, int nY, int nWidth = -1, int nHeight = -1);
-    'AU3_WinMoveByHandle': ['int', [HWND, 'int', 'int', 'int', 'int']],
-    //AU3_API int WINAPI AU3_WinMoveByHandle(HWND hWnd, int nX, int nY, int nWidth = -1, int nHeight = -1);
-    'AU3_WinSetOnTop': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_WinSetOnTop(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nFlag);
-    'AU3_WinSetOnTopByHandle': ['int', [HWND, 'int']],
-    //AU3_API int WINAPI AU3_WinSetOnTopByHandle(HWND hWnd, int nFlag);
-    'AU3_WinSetState': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_WinSetState(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nFlags);
-    'AU3_WinSetStateByHandle': ['int', [HWND, 'int']],
-    //AU3_API int WINAPI AU3_WinSetStateByHandle(HWND hWnd, int nFlags);
-    'AU3_WinSetTitle': ['int', [LPCWSTR,/*[in,defaultvalue("")]*/ LPCWSTR, LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinSetTitle(LPCWSTR szTitle,/*[in,defaultvalue("")]*/ LPCWSTR szText, LPCWSTR szNewTitle);
-    'AU3_WinSetTitleByHandle': ['int', [HWND, LPCWSTR]],
-    //AU3_API int WINAPI AU3_WinSetTitleByHandle(HWND hWnd, LPCWSTR szNewTitle);
-    'AU3_WinSetTrans': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_WinSetTrans(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nTrans);
-    'AU3_WinSetTransByHandle': ['int', [HWND, 'int']],
-    //AU3_API int WINAPI AU3_WinSetTransByHandle(HWND hWnd, int nTrans);
-    'AU3_WinWait': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_WinWait(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nTimeout = 0);
-    'AU3_WinWaitByHandle': ['int', [HWND, 'int']],
-    //AU3_API int WINAPI AU3_WinWaitByHandle(HWND hWnd, int nTimeout);
-    'AU3_WinWaitActive': ['int', [LPCWSTR, LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_WinWaitActive(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nTimeout = 0);
-    'AU3_WinWaitActiveByHandle': ['int', [HWND, 'int']],
-    //AU3_API int WINAPI AU3_WinWaitActiveByHandle(HWND hWnd, int nTimeout);
-    'AU3_WinWaitClose': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_WinWaitClose(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nTimeout = 0);
-    'AU3_WinWaitCloseByHandle': ['int', [HWND, 'int']],
-    //AU3_API int WINAPI AU3_WinWaitCloseByHandle(HWND hWnd, int nTimeout);
-    'AU3_WinWaitNotActive': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, 'int']],
-    //AU3_API int WINAPI AU3_WinWaitNotActive(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, int nTimeout);
-    'AU3_WinWaitNotActiveByHandle': ['int', [HWND, 'int']],
-    //AU3_API int WINAPI AU3_WinWaitNotActiveByHandle(HWND hWnd, int nTimeout = 0);
+
+
+
+var def_args = {
+    'ClipGet':                  {1: 512},
+    'ControlClick':             {1: '', 3: 'LEFT', 4: 1, 5: AU3_INTDEFAULT, 6: AU3_INTDEFAULT},
+    'ControlClickByHandle':     {2: 'LEFT', 3: 1, 4: AU3_INTDEFAULT, 5: AU3_INTDEFAULT},
+    'ControlCommand':           {1: '', 4: '', 6: 256},
+    'ControlCommandByHandle':   {3: '', 5: 256},
+    'ControlListView':          {1: '', 4: '', 5: '', 7: 256},
+    'ControlListViewByHandle':  {3: '', 4: '', 6: 256},
+    'ControlDisable':           {1: ''},
+    'ControlEnable':            {1: ''},
+    'ControlFocus':             {1: ''},
+    'ControlGetFocus':          {1: '', 3: 256},
+    'ControlGetFocusByHandle':  {2: 256}
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 var def_args = {
     'ClipGet':                  {1: 512},
@@ -1339,37 +1142,154 @@ if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
 var autoit;
-try {
-    autoit = koffi.load(path.join(__dirname, dll));
-} catch (loadError) {
-    console.error('Failed to load AutoIt DLL:', loadError.message);
-    console.error('DLL path:', path.join(__dirname, dll));
+var dllPaths = [
+    path.join(__dirname, dll),                           // Normal Node.js environment
+    path.join(process.cwd(), dll),                       // Current working directory
+    path.join(process.cwd(), 'node_modules', 'autoit', dll), // Relative to CWD
+    path.join(path.dirname(process.execPath), dll),      // Next to executable (pkg)
+    dll                                                  // Just the filename (system PATH)
+];
+
+var loadError;
+for (var i = 0; i < dllPaths.length; i++) {
+    try {
+        autoit = koffi.load(dllPaths[i]);
+        break;
+    } catch (err) {
+        loadError = err;
+    }
+}
+
+if (!autoit) {
     throw new Error('AutoIt failed to load, using mock implementation: ' + loadError.message);
 }
 
+// Definitions (moved here after autoit is loaded)
+var AU3_INTDEFAULT = -2147483647;	// "Default" value for _some_ int parameters (largest negative number)
+
+var autoit_functions = {
+    Init: autoit.func('void AU3_Init()'),
+    error: autoit.func('int AU3_error()'),
+    AutoItSetOption: autoit.func('int AU3_AutoItSetOption(str16, int)'),
+    ClipGet: autoit.func('void AU3_ClipGet(str16, int)'),
+    ClipPut: autoit.func('void AU3_ClipPut(str16)'),
+    ControlClick: autoit.func('int AU3_ControlClick(str16, str16, str16, str16, int, int, int)'),
+    ControlClickByHandle: autoit.func('int AU3_ControlClickByHandle(int, int, str16, int, int, int)'),
+    ControlCommand: autoit.func('void AU3_ControlCommand(str16, str16, str16, str16, str16, str16, int)'),
+    ControlCommandByHandle: autoit.func('void AU3_ControlCommandByHandle(int, int, str16, str16, str16, int)'),
+    ControlListView: autoit.func('void AU3_ControlListView(str16, str16, str16, str16, str16, str16, str16, int)'),
+    ControlListViewByHandle: autoit.func('void AU3_ControlListViewByHandle(int, int, str16, str16, str16, str16, int)'),
+    ControlDisable: autoit.func('int AU3_ControlDisable(str16, str16, str16)'),
+    ControlDisableByHandle: autoit.func('int AU3_ControlDisableByHandle(int, int)'),
+    ControlEnable: autoit.func('int AU3_ControlEnable(str16, str16, str16)'),
+    ControlEnableByHandle: autoit.func('int AU3_ControlEnableByHandle(int, int)'),
+    ControlFocus: autoit.func('int AU3_ControlFocus(str16, str16, str16)'),
+    ControlFocusByHandle: autoit.func('int AU3_ControlFocusByHandle(int, int)'),
+    ControlGetFocus: autoit.func('void AU3_ControlGetFocus(str16, str16, str16, int)'),
+    ControlGetFocusByHandle: autoit.func('void AU3_ControlGetFocusByHandle(int, str16, int)'),
+    ControlGetHandle: autoit.func('int AU3_ControlGetHandle(int, str16)'),
+    ControlGetHandleAsText: autoit.func('void AU3_ControlGetHandleAsText(str16, str16, str16, str16, int)'),
+    ControlGetPos: autoit.func('int AU3_ControlGetPos(str16, str16, str16, void*)'),
+    ControlGetPosByHandle: autoit.func('int AU3_ControlGetPosByHandle(int, int, void*)'),
+    ControlGetText: autoit.func('void AU3_ControlGetText(str16, str16, str16, str16, int)'),
+    ControlGetTextByHandle: autoit.func('void AU3_ControlGetTextByHandle(int, int, str16, int)'),
+    ControlHide: autoit.func('int AU3_ControlHide(str16, str16, str16)'),
+    ControlHideByHandle: autoit.func('int AU3_ControlHideByHandle(int, int)'),
+    ControlMove: autoit.func('int AU3_ControlMove(str16, str16, str16, int, int, int, int)'),
+    ControlMoveByHandle: autoit.func('int AU3_ControlMoveByHandle(int, int, int, int, int, int)'),
+    ControlSend: autoit.func('int AU3_ControlSend(str16, str16, str16, str16, int)'),
+    ControlSendByHandle: autoit.func('int AU3_ControlSendByHandle(int, int, str16, int)'),
+    ControlSetText: autoit.func('int AU3_ControlSetText(str16, str16, str16, str16)'),
+    ControlSetTextByHandle: autoit.func('int AU3_ControlSetTextByHandle(int, int, str16)'),
+    ControlShow: autoit.func('int AU3_ControlShow(str16, str16, str16)'),
+    ControlShowByHandle: autoit.func('int AU3_ControlShowByHandle(int, int)'),
+    ControlTreeView: autoit.func('void AU3_ControlTreeView(str16, str16, str16, str16, str16, str16, str16, int)'),
+    ControlTreeViewByHandle: autoit.func('void AU3_ControlTreeViewByHandle(int, int, str16, str16, str16, str16, int)'),
+    DriveMapAdd: autoit.func('void AU3_DriveMapAdd(str16, str16, int, str16, str16, str16, int)'),
+    DriveMapDel: autoit.func('int AU3_DriveMapDel(str16)'),
+    DriveMapGet: autoit.func('void AU3_DriveMapGet(str16, str16, int)'),
+    IsAdmin: autoit.func('int AU3_IsAdmin()'),
+    MouseClick: autoit.func('int AU3_MouseClick(str16, int, int, int, int)'),
+    MouseClickDrag: autoit.func('int AU3_MouseClickDrag(str16, int, int, int, int, int)'),
+    MouseDown: autoit.func('void AU3_MouseDown(str16)'),
+    MouseGetCursor: autoit.func('int AU3_MouseGetCursor()'),
+    MouseGetPos: autoit.func('void AU3_MouseGetPos(void*)'),
+    MouseMove: autoit.func('int AU3_MouseMove(int, int, int)'),
+    MouseUp: autoit.func('void AU3_MouseUp(str16)'),
+    MouseWheel: autoit.func('void AU3_MouseWheel(str16, int)'),
+    Opt: autoit.func('int AU3_Opt(str16, int)'),
+    PixelChecksum: autoit.func('uint32 AU3_PixelChecksum(void*, int)'),
+    PixelGetColor: autoit.func('int AU3_PixelGetColor(int, int)'),
+    PixelSearch: autoit.func('void AU3_PixelSearch(void*, int, int, int, void*)'),
+    ProcessClose: autoit.func('int AU3_ProcessClose(str16)'),
+    ProcessExists: autoit.func('int AU3_ProcessExists(str16)'),
+    ProcessSetPriority: autoit.func('int AU3_ProcessSetPriority(str16, int)'),
+    ProcessWait: autoit.func('int AU3_ProcessWait(str16, int)'),
+    ProcessWaitClose: autoit.func('int AU3_ProcessWaitClose(str16, int)'),
+    Run: autoit.func('int AU3_Run(str16, str16, int)'),
+    RunWait: autoit.func('int AU3_RunWait(str16, str16, int)'),
+    RunAs: autoit.func('int AU3_RunAs(str16, str16, str16, int, str16, str16, int)'),
+    RunAsWait: autoit.func('int AU3_RunAsWait(str16, str16, str16, int, str16, str16, int)'),
+    Send: autoit.func('void AU3_Send(str16, int)'),
+    Shutdown: autoit.func('int AU3_Shutdown(int)'),
+    Sleep: autoit.func('void AU3_Sleep(int)'),
+    StatusbarGetText: autoit.func('int AU3_StatusbarGetText(str16, str16, int, str16, int)'),
+    StatusbarGetTextByHandle: autoit.func('int AU3_StatusbarGetTextByHandle(int, int, str16, int)'),
+    ToolTip: autoit.func('void AU3_ToolTip(str16, int, int)'),
+    WinActivate: autoit.func('int AU3_WinActivate(str16, str16)'),
+    WinActivateByHandle: autoit.func('int AU3_WinActivateByHandle(int)'),
+    WinActive: autoit.func('int AU3_WinActive(str16, str16)'),
+    WinActiveByHandle: autoit.func('int AU3_WinActiveByHandle(int)'),
+    WinClose: autoit.func('int AU3_WinClose(str16, str16)'),
+    WinCloseByHandle: autoit.func('int AU3_WinCloseByHandle(int)'),
+    WinExists: autoit.func('int AU3_WinExists(str16, str16)'),
+    WinExistsByHandle: autoit.func('int AU3_WinExistsByHandle(int)'),
+    WinGetCaretPos: autoit.func('int AU3_WinGetCaretPos(void*)'),
+    WinGetClassList: autoit.func('void AU3_WinGetClassList(str16, str16, str16, int)'),
+    WinGetClassListByHandle: autoit.func('void AU3_WinGetClassListByHandle(int, str16, int)'),
+    WinGetClientSize: autoit.func('int AU3_WinGetClientSize(str16, str16, void*)'),
+    WinGetClientSizeByHandle: autoit.func('int AU3_WinGetClientSizeByHandle(int, void*)'),
+    WinGetHandle: autoit.func('int AU3_WinGetHandle(str16, str16)'),
+    WinGetHandleAsText: autoit.func('void AU3_WinGetHandleAsText(str16, str16, str16, int)'),
+    WinGetPos: autoit.func('int AU3_WinGetPos(str16, str16, void*)'),
+    WinGetPosByHandle: autoit.func('int AU3_WinGetPosByHandle(int, void*)'),
+    WinGetProcess: autoit.func('uint32 AU3_WinGetProcess(str16, str16)'),
+    WinGetProcessByHandle: autoit.func('uint32 AU3_WinGetProcessByHandle(int)'),
+    WinGetState: autoit.func('int AU3_WinGetState(str16, str16)'),
+    WinGetStateByHandle: autoit.func('int AU3_WinGetStateByHandle(int)'),
+    WinGetText: autoit.func('void AU3_WinGetText(str16, str16, str16, int)'),
+    WinGetTextByHandle: autoit.func('void AU3_WinGetTextByHandle(int, str16, int)'),
+    WinGetTitle: autoit.func('void AU3_WinGetTitle(str16, str16, str16, int)'),
+    WinGetTitleByHandle: autoit.func('void AU3_WinGetTitleByHandle(int, str16, int)'),
+    WinKill: autoit.func('int AU3_WinKill(str16, str16)'),
+    WinKillByHandle: autoit.func('int AU3_WinKillByHandle(int)'),
+    WinMenuSelectItem: autoit.func('int AU3_WinMenuSelectItem(str16, str16, str16, str16, str16, str16, str16, str16, str16, str16)'),
+    WinMenuSelectItemByHandle: autoit.func('int AU3_WinMenuSelectItemByHandle(int, str16, str16, str16, str16, str16, str16, str16, str16)'),
+    WinMinimizeAll: autoit.func('void AU3_WinMinimizeAll()'),
+    WinMinimizeAllUndo: autoit.func('void AU3_WinMinimizeAllUndo()'),
+    WinMove: autoit.func('int AU3_WinMove(str16, str16, int, int, int, int)'),
+    WinMoveByHandle: autoit.func('int AU3_WinMoveByHandle(int, int, int, int, int)'),
+    WinSetOnTop: autoit.func('int AU3_WinSetOnTop(str16, str16, int)'),
+    WinSetOnTopByHandle: autoit.func('int AU3_WinSetOnTopByHandle(int, int)'),
+    WinSetState: autoit.func('int AU3_WinSetState(str16, str16, int)'),
+    WinSetStateByHandle: autoit.func('int AU3_WinSetStateByHandle(int, int)'),
+    WinSetTitle: autoit.func('int AU3_WinSetTitle(str16, str16, str16)'),
+    WinSetTitleByHandle: autoit.func('int AU3_WinSetTitleByHandle(int, str16)'),
+    WinSetTrans: autoit.func('int AU3_WinSetTrans(str16, str16, int)'),
+    WinSetTransByHandle: autoit.func('int AU3_WinSetTransByHandle(int, int)'),
+    WinWait: autoit.func('int AU3_WinWait(str16, str16, int)'),
+    WinWaitByHandle: autoit.func('int AU3_WinWaitByHandle(int, int)'),
+    WinWaitActive: autoit.func('int AU3_WinWaitActive(str16, str16, int)'),
+    WinWaitActiveByHandle: autoit.func('int AU3_WinWaitActiveByHandle(int, int)'),
+    WinWaitClose: autoit.func('int AU3_WinWaitClose(str16, str16, int)'),
+    WinWaitCloseByHandle: autoit.func('int AU3_WinWaitCloseByHandle(int, int)'),
+    WinWaitNotActive: autoit.func('int AU3_WinWaitNotActive(str16, str16, int)'),
+    WinWaitNotActiveByHandle: autoit.func('int AU3_WinWaitNotActiveByHandle(int, int)')
+};
+
 function modify_func(func){
-    var func_def = autoit_functions[func];
-    
-    // Check if any argument is an object before passing to koffi
-    for(var i = 0; i < func_def[1].length; i++) {
-        if(typeof func_def[1][i] === 'object') {
-            console.error(`Function ${func} has object type at argument ${i}:`, func_def[1][i]);
-            console.error(`  Return type: ${typeof func_def[0]} "${func_def[0]}"`);
-            console.error(`  Args:`, func_def[1].map((t, idx) => `${idx}: ${typeof t} "${t}"`));
-            throw new Error(`Function ${func} has object type at argument ${i}: ${JSON.stringify(func_def[1][i])}`);
-        }
-    }
-    
-    if(typeof func_def[0] === 'object') {
-        console.error(`Function ${func} has object return type:`, func_def[0]);
-        throw new Error(`Function ${func} has object return type: ${JSON.stringify(func_def[0])}`);
-    }
-    
-    var koffi_func = autoit.func(func, func_def[0], func_def[1]);
-    func = func.substr(4);   //Remove "AU3_"
-    $[func] = function(){
-        return koffi_func.apply(this, arguments);
-    }
+    // Functions are now already created with autoit.func(), just assign them to $
+    $[func] = autoit_functions[func];
     $[func].async = $[func];
 }
 
@@ -1392,6 +1312,9 @@ function modify_def_args(func){
 
     $[func].async = function(){
         // Note: koffi doesn't have built-in async, so we'll use the sync version
+        var return_func = arg_to_return_value[func];
+        var return_arg = (return_func === undefined ? -1 : return_func.arg);
+        
         var args = Array.prototype.slice.call(arguments);
         var callback = args.pop(); // remove callback from args
         
@@ -1477,7 +1400,7 @@ function modify_arg_to_return_value(func){
 }
 
 function modify_byhande_func(func){
-    func = func.substr(4);   //Remove "AU3_"
+    // Function names no longer have AU3_ prefix
     var appendix = 'ByHandle';
     var is_byhandle = (func.length > appendix.length && func.substr(func.length - appendix.length) == appendix);
     if(!is_byhandle) return;
@@ -1524,21 +1447,21 @@ for(var func in autoit_functions){
 
 
 var user32dll = koffi.load('user32.dll');
-var PostMessage = user32dll.func('PostMessageW', 'int', [HWND, UINT, WPARAM, LPARAM]);
+var PostMessage = user32dll.func('PostMessageW', 'int', ['int', 'uint32', 'uint32', 'uint32']);
 $.PostMessage = function(hWnd, msg, wParam, lParam){
     if(wParam === undefined) wParam = 0;
     if(lParam === undefined) lParam = 0;
     return PostMessage(hWnd, msg, wParam, lParam);
 }
 
-var SendMessage = user32dll.func('SendMessageW', 'int', [HWND, UINT, WPARAM, LPARAM]);
+var SendMessage = user32dll.func('SendMessageW', 'int', ['int', 'uint32', 'uint32', 'uint32']);
 $.SendMessage = function(hWnd, msg, wParam, lParam){
     if(wParam === undefined) wParam = 0;
     if(lParam === undefined) lParam = 0;
     return SendMessage(hWnd, msg, wParam, lParam);
 }
 
-$.GetDlgCtrlID = user32dll.func('GetDlgCtrlID', 'int', [HWND]);
+$.GetDlgCtrlID = user32dll.func('GetDlgCtrlID', 'int', ['int']);
 
 // Export struct types as constructors instead of direct objects
 $.RECT = function() { return koffi.alloc(RECT); };
