@@ -1,6 +1,6 @@
 {
   "name": "autoit",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "nodejs autoit(x) wrapper",
   "license": "MIT",
   "repository": {
@@ -27,13 +27,12 @@
   "keywords": [
     "autoit",
     "nodejs",
-    "ffi"
+    "koffi"
   ],
   "dependencies": {
-    "ffi-napi": "^4.0.3",
+    "koffi": "^2.8.0",
     "iconv-lite": "^0.6.2",
-    "ref-napi": "^3.0.2",
-    "ref-struct-di": "^1.1.1"
+    "ref-napi": "^3.0.2"
   },
   "devDependencies": {},
   "readme": "",

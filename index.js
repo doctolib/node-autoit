@@ -1,12 +1,9 @@
 'use strict';
 
-var ffi = require('ffi-napi');
+var koffi = require('koffi');
 var path = require('path');
 var os = require('os');
-var ref = require('ref-napi')
-var Struct = require('ref-struct-di')(ref);
 var wchar_t = require(path.join(__dirname, 'wchar.js'));
-var wchar_string = wchar_t.string;
 
 function get_dll(){
     switch(os.arch()){
@@ -18,27 +15,28 @@ function get_dll(){
 
 // Types
 var HWND = 'int';
-var LPWSTR = 'pointer';
+var LPWSTR = 'str16';   // koffi UTF-16 string type for Windows wide strings
 var DWORD = 'uint32';
 var UINT = 'uint32';
-var LONG = 'long';
+var LONG = 'int32';  // Windows LONG is 32-bit signed integer
 var WPARAM = 'uint32';
 var LPARAM = 'uint32';
-var LPCWSTR = wchar_string;
-var LPRECT = 'pointer';
-var LPPOINT = 'pointer';
+var LPCWSTR = 'str16';  // koffi UTF-16 string type for Windows wide strings
 
-var RECT = Struct({
+var RECT = koffi.struct('RECT', {
     'left': LONG,
     'top': LONG,
     'right': LONG,
     'bottom': LONG,
 });
 
-var POINT = Struct({
+var POINT = koffi.struct('POINT', {
     'x': LONG,
     'y': LONG,
 });
+
+var LPRECT = 'void*';      // Use void* for struct pointers in function signatures
+var LPPOINT = 'void*';    // Use void* for struct pointers in function signatures
 
 var $ = {};
 
@@ -1014,7 +1012,7 @@ var autoit_functions = {
     //AU3_API void WINAPI AU3_ControlGetFocus(LPCWSTR szTitle, LPCWSTR szText, LPWSTR szControlWithFocus, int nBufSize);
     'AU3_ControlGetFocusByHandle': ['void', [HWND, LPWSTR, 'int']],
     //AU3_API void WINAPI AU3_ControlGetFocusByHandle(HWND hWnd, LPWSTR szControlWithFocus, int nBufSize);
-    'AU3_ControlGetHandle': [HWND, [HWND, LPCWSTR]],
+    'AU3_ControlGetHandle': ['int', [HWND, LPCWSTR]],
     //AU3_API HWND WINAPI AU3_ControlGetHandle(HWND hWnd, LPCWSTR szControl);
     'AU3_ControlGetHandleAsText': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPCWSTR, LPWSTR, 'int']],
     //AU3_API void WINAPI AU3_ControlGetHandleAsText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPCWSTR szControl, LPWSTR szRetText, int nBufSize);
@@ -1081,7 +1079,7 @@ var autoit_functions = {
     'AU3_Opt': ['int', [LPCWSTR, 'int']],
     //AU3_API int WINAPI AU3_Opt(LPCWSTR szOption, int nValue);
 
-    'AU3_PixelChecksum': ['uint', [LPRECT, 'int']],
+    'AU3_PixelChecksum': ['uint32', [LPRECT, 'int']],
     //AU3_API unsigned int WINAPI AU3_PixelChecksum(LPRECT lpRect, int nStep = 1);
     'AU3_PixelGetColor': ['int', ['int', 'int']],
     //AU3_API int WINAPI AU3_PixelGetColor(int nX, int nY);
@@ -1147,7 +1145,7 @@ var autoit_functions = {
     //AU3_API int WINAPI AU3_WinGetClientSize(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPRECT lpRect);
     'AU3_WinGetClientSizeByHandle': ['int', [HWND, LPRECT]],
     //AU3_API int WINAPI AU3_WinGetClientSizeByHandle(HWND hWnd, LPRECT lpRect);
-    'AU3_WinGetHandle': [HWND, [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
+    'AU3_WinGetHandle': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
     //AU3_API HWND WINAPI AU3_WinGetHandle(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
     'AU3_WinGetHandleAsText': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPWSTR, 'int']],
     //AU3_API void WINAPI AU3_WinGetHandleAsText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPWSTR szRetText, int nBufSize);
@@ -1155,9 +1153,9 @@ var autoit_functions = {
     //AU3_API int WINAPI AU3_WinGetPos(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPRECT lpRect);
     'AU3_WinGetPosByHandle': ['int', [HWND, LPRECT]],
     //AU3_API int WINAPI AU3_WinGetPosByHandle(HWND hWnd, LPRECT lpRect);
-    'AU3_WinGetProcess': [DWORD, [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
+    'AU3_WinGetProcess': ['uint32', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
     //AU3_API DWORD WINAPI AU3_WinGetProcess(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
-    'AU3_WinGetProcessByHandle': [DWORD, [HWND]],
+    'AU3_WinGetProcessByHandle': ['uint32', [HWND]],
     //AU3_API DWORD WINAPI AU3_WinGetProcessByHandle(HWND hWnd);
     'AU3_WinGetState': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
     //AU3_API int WINAPI AU3_WinGetState(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
@@ -1267,6 +1265,7 @@ var def_args = {
     'StatusbarGetTextByHandle': {1: 1, 3: 256},
     'ToolTip':                  {1: AU3_INTDEFAULT, 2: AU3_INTDEFAULT},
     'WinActivate':              {1: ''},
+    'WinActive':                {1: ''},
     'WinClose':                 {1: ''},
     'WinExists':                {1: ''},
     'WinGetClassList':          {1: '', 3: 512},
@@ -1340,28 +1339,48 @@ var dll = get_dll();
 if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
-var autoit_dll = ffi.Library(path.join(process.cwd(), dll), autoit_functions);
+var autoit_lib;
+try {
+    autoit_lib = koffi.load(path.join(__dirname, dll));
+} catch (loadError) {
+    console.error('Failed to load AutoIt DLL:', loadError.message);
+    console.error('DLL path:', path.join(__dirname, dll));
+    throw new Error('AutoIt failed to load: ' + loadError.message);
+}
 
 function modify_func(func){
-    var old_func = autoit_dll[func];
-    //$[func] = old_func;
+    var func_def = autoit_functions[func];
+    var koffi_func = autoit_lib.func(func, func_def[0], func_def[1]);
     func = func.substr(4);   //Remove "AU3_"
     $[func] = function(){
-        return old_func.apply(this, arguments);
+        return koffi_func.apply(this, arguments);
     }
+    
     $[func].async = function(){
-        return old_func.async.apply(this, arguments);
+        var args = Array.prototype.slice.call(arguments);
+        var callback = args.pop(); // remove callback from args
+        
+        try {
+            var result = koffi_func.apply(this, args);
+            // Call callback with result in next tick to simulate async behavior
+            process.nextTick(function() {
+                callback(null, result);
+            });
+        } catch (err) {
+            process.nextTick(function() {
+                callback(err);
+            });
+        }
     }
 }
 
 function modify_def_args(func){
     var old_func = $[func];
     var get_args = def_args[func];
+    var return_func = arg_to_return_value[func];
+    var return_arg = (return_func === undefined ? -1 : return_func.arg);
 
     $[func] = function(){
-        var return_func = arg_to_return_value[func];
-        var return_arg = (return_func === undefined ? -1 : return_func.arg);
-
         var args = Array.prototype.slice.call(arguments);
         for(var i in get_args){
             var j = (return_arg >= 0 && i >= return_arg ? i - 1 : i);
@@ -1373,14 +1392,28 @@ function modify_def_args(func){
 
     $[func].async = function(){
         var args = Array.prototype.slice.call(arguments);
+        var callback = args.pop(); // remove callback from args
+        
         for(var i in get_args){
-            while(i >= args.length) args.push(undefined);
-            if(args[i] === undefined) args[i] = get_args[i];
+            var j = (return_arg >= 0 && i >= return_arg ? i - 1 : i);
+            while(j >= args.length) args.push(undefined);
+            if(args[j] === undefined) args[j] = get_args[i];
         }
-        return old_func.async.apply(this, args);
+        
+        try {
+            var result = $[func].apply(this, args);
+            process.nextTick(function() {
+                callback(null, result);
+            });
+        } catch (err) {
+            process.nextTick(function() {
+                callback(err);
+            });
+        }
     }
 }
 
+// String handling utilities for wide character conversion
 function getWString(buf){
     for(var i = 0; i < buf.length; i += 2){
         if(buf[i] == 0 && buf[i + 1] == 0)
@@ -1406,70 +1439,38 @@ function modify_arg_to_return_value(func){
         else if(get_ret.type == 'rect'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var rect = new RECT();
-            var buf = rect.ref();
-            args[get_ret.arg] = buf;
+            var rect = koffi.alloc(RECT); // Allocate struct buffer
+            args[get_ret.arg] = rect;
             old_func.apply(this, args);
-            return rect;
+            return koffi.decode(rect, RECT); // Decode struct from buffer
         }
         else if(get_ret.type == 'point'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var point = new POINT();
-            var buf = point.ref();
-            args[get_ret.arg] = buf;
+            var point = koffi.alloc(POINT); // Allocate struct buffer
+            args[get_ret.arg] = point;
             old_func.apply(this, args);
-            return point;
+            return koffi.decode(point, POINT); // Decode struct from buffer
         }
         else
             console.log('unknown return type ' + get_ret.type);
     }
 
     $[func].async = function(){
-        if(get_ret.type == 'wstring'){
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
-            args.splice(get_ret.arg, 0, undefined);
-            var nBufSize = args[get_ret.ex_arg];
-            var buf = Buffer.alloc(wchar_t.size * nBufSize);
-            args[get_ret.arg] = buf;
-
-            args[args.length - 1] = function(err){
-                if(err) callback(err)
-                else callback(err, getWString(buf));
-            }
-            return old_func.async.apply(this, args);
+        var args = Array.prototype.slice.call(arguments);
+        var callback = args.pop(); // remove callback from args
+        
+        try {
+            var result = $[func].apply(this, args);
+            // Call callback with result in next tick to simulate async behavior
+            process.nextTick(function() {
+                callback(null, result);
+            });
+        } catch (err) {
+            process.nextTick(function() {
+                callback(err);
+            });
         }
-        else if(get_ret.type == 'rect'){
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
-            args.splice(get_ret.arg, 0, undefined);
-            var rect = new RECT();
-            var buf = rect.ref();
-            args[get_ret.arg] = buf;
-
-            args[args.length - 1] = function(err){
-                if(err) callback(err)
-                else callback(err, rect);
-            }
-            return old_func.async.apply(this, args);
-        }
-        else if(get_ret.type == 'point'){
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
-            args.splice(get_ret.arg, 0, undefined);
-            var point = new POINT();
-            var buf = point.ref();
-            args[get_ret.arg] = buf;
-
-            args[args.length - 1] = function(err){
-                if(err) callback(err)
-                else callback(err, point);
-            }
-            return old_func.async.apply(this, args);
-        }
-        else
-            console.log('unknown return type ' + get_ret.type);
     }
 }
 
@@ -1500,7 +1501,12 @@ function modify_byhande_func(func){
 
 
 for(var func in autoit_functions){
-    modify_func(func);
+    try {
+        modify_func(func);
+    } catch (error) {
+        console.error(`Error creating function ${func}:`, error.message);
+        throw error;
+    }
 }
 for(var func in arg_to_return_value){
     modify_arg_to_return_value(func);
@@ -1514,29 +1520,32 @@ for(var func in autoit_functions){
 
 
 
-var user32dll_handle = ffi.DynamicLibrary('user32.dll');
-var symbol = user32dll_handle.get('PostMessageW');
-var PostMessage = ffi.ForeignFunction(symbol, 'int', [HWND, UINT, WPARAM, LPARAM]);
+var user32dll = koffi.load('user32.dll');
+var PostMessage = user32dll.func('PostMessageW', 'int', [HWND, UINT, WPARAM, LPARAM]);
 $.PostMessage = function(hWnd, msg, wParam, lParam){
     if(wParam === undefined) wParam = 0;
     if(lParam === undefined) lParam = 0;
     return PostMessage(hWnd, msg, wParam, lParam);
 }
 
-var symbol = user32dll_handle.get('SendMessageW');
-var SendMessage = ffi.ForeignFunction(symbol, 'int', [HWND, UINT, WPARAM, LPARAM]);
+var SendMessage = user32dll.func('SendMessageW', 'int', [HWND, UINT, WPARAM, LPARAM]);
 $.SendMessage = function(hWnd, msg, wParam, lParam){
     if(wParam === undefined) wParam = 0;
     if(lParam === undefined) lParam = 0;
     return SendMessage(hWnd, msg, wParam, lParam);
 }
 
-var symbol = user32dll_handle.get('GetDlgCtrlID');
-$.GetDlgCtrlID = ffi.ForeignFunction(symbol, 'int', [HWND]);
+$.GetDlgCtrlID = user32dll.func('GetDlgCtrlID', 'int', [HWND]);
 
-$.RECT = RECT;
-$.POINT = POINT;
+// Export struct types as constructors for koffi
+$.RECT = function() { return koffi.alloc(RECT); };
+$.POINT = function() { return koffi.alloc(POINT); };
 
-$.user32dll_handle = user32dll_handle;
+// Export raw struct definitions for advanced use
+$.RECT_TYPE = RECT;
+$.POINT_TYPE = POINT;
+
+// Export wchar_t for direct access if needed
+$.wchar_t = wchar_t;
 
 module.exports = $;
