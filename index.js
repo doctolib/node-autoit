@@ -1345,8 +1345,9 @@ var autoit_lib;
 var dllPaths = [
     path.join(__dirname, dll),                    // Package directory (preferred)
     path.join(process.cwd(), dll),                // Current working directory
+    path.join(process.cwd(), 'node_modules', 'autoit', dll), // node_modules/autoit
     path.join(path.dirname(process.execPath), dll), // Node.js executable directory
-    dll
+    dll // Just the DLL name (system PATH)
 ];
 
 var loadError = null;
