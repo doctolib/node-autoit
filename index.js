@@ -1340,12 +1340,40 @@ if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
 var autoit_lib;
-try {
-    autoit_lib = koffi.load(path.join(__dirname, dll));
-} catch (loadError) {
-    console.error('Failed to load AutoIt DLL:', loadError.message);
-    console.error('DLL path:', path.join(__dirname, dll));
-    throw new Error('AutoIt failed to load: ' + loadError.message);
+
+// Define fallback paths to try loading the DLL from
+var dllPaths = [
+    path.join(__dirname, dll),                    // Package directory (preferred)
+    path.join(process.cwd(), dll),                // Current working directory
+    path.join(path.dirname(process.execPath), dll), // Node.js executable directory
+    dll
+];
+
+var loadError = null;
+var loadedFrom = null;
+
+// Try loading from each path
+for (var i = 0; i < dllPaths.length; i++) {
+    try {
+        autoit_lib = koffi.load(dllPaths[i]);
+        loadedFrom = dllPaths[i];
+        console.log('AutoIt DLL loaded successfully from:', loadedFrom);
+        break;
+    } catch (err) {
+        loadError = err;
+        console.warn('Failed to load DLL from:', dllPaths[i], '- Error:', err.message);
+        continue;
+    }
+}
+
+// If all attempts failed, throw error
+if (!autoit_lib) {
+    console.error('Failed to load AutoIt DLL from all attempted paths:');
+    dllPaths.forEach(function(dllPath, index) {
+        console.error('  ' + (index + 1) + '. ' + dllPath);
+    });
+    console.error('Last error:', loadError.message);
+    throw new Error('AutoIt DLL could not be loaded from any location. Ensure the DLL exists and is accessible.');
 }
 
 function modify_func(func){
