@@ -1468,7 +1468,7 @@ function modify_arg_to_return_value(func){
         else if(get_ret.type == 'rect'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var rect = koffi.alloc(RECT); // Allocate struct buffer
+            var rect = koffi.alloc(RECT, 1); // Allocate struct buffer
             args[get_ret.arg] = rect;
             old_func.apply(this, args);
             return koffi.decode(rect, RECT); // Decode struct from buffer
@@ -1476,7 +1476,7 @@ function modify_arg_to_return_value(func){
         else if(get_ret.type == 'point'){
             var args = Array.prototype.slice.call(arguments);
             args.splice(get_ret.arg, 0, undefined);
-            var point = koffi.alloc(POINT); // Allocate struct buffer
+            var point = koffi.alloc(POINT, 1); // Allocate struct buffer
             args[get_ret.arg] = point;
             old_func.apply(this, args);
             return koffi.decode(point, POINT); // Decode struct from buffer
@@ -1567,8 +1567,8 @@ $.SendMessage = function(hWnd, msg, wParam, lParam){
 $.GetDlgCtrlID = user32dll.func('GetDlgCtrlID', 'int', [HWND]);
 
 // Export struct types as constructors for koffi
-$.RECT = function() { return koffi.alloc(RECT); };
-$.POINT = function() { return koffi.alloc(POINT); };
+$.RECT = function() { return koffi.alloc(RECT, 1); };
+$.POINT = function() { return koffi.alloc(POINT, 1); };
 
 // Export raw struct definitions for advanced use
 $.RECT_TYPE = RECT;
