@@ -1358,7 +1358,7 @@ for (var i = 0; i < dllPaths.length; i++) {
     try {
         autoit_lib = koffi.load(dllPaths[i]);
         loadedFrom = dllPaths[i];
-        console.log('AutoIt DLL loaded successfully from:', loadedFrom);
+        // console.log('AutoIt DLL loaded successfully from:', loadedFrom);
         break;
     } catch (err) {
         loadError = err;
