@@ -86,9 +86,22 @@ try {
         } else {
             console.log('✓ Async ClipGet result:', result);
         }
+    });
+
+    // Test truly async WinWaitActive - this should NOT block the main thread
+    console.log('\n13. Testing WinWaitActive.async (non-blocking behavior)...');
+    console.log('   Starting async WinWaitActive call...');
+    
+    var startTime = Date.now();
+    
+    // This should not block - we're waiting for a window that doesn't exist
+    au.WinWaitActive.async("NonExistentWindow12345", "", 2000, function(err, result) {
+        var endTime = Date.now();
+        console.log('   ✓ Async WinWaitActive completed after', endTime - startTime, 'ms');
+        console.log('   Result:', result, '(0 = timeout, which is expected)');
         
-        // Cleanup and close
-        console.log('\n13. Cleaning up...');
+        // Final cleanup
+        console.log('\n14. Cleaning up...');
         var closed = au.WinClose("[Class:Notepad]");
         if (closed) {
             console.log('✓ Notepad closed successfully');
@@ -101,6 +114,10 @@ try {
         
         console.log('\n=== Test completed successfully! ===');
     });
+    
+    // This should execute immediately, proving the async call above didn't block
+    console.log('   ✓ This message proves the main thread is NOT blocked!');
+    console.log('   (If you see this immediately, async is working correctly)');
 
 } catch (error) {
     console.error('\n✗ Test failed with error:', error.message);

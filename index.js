@@ -3,7 +3,15 @@
 var koffi = require('koffi');
 var path = require('path');
 var os = require('os');
-var wchar_t = require(path.join(__dirname, 'wchar.js'));
+
+// Simple wchar_t replacement for koffi (no ref-napi dependency)
+var wchar_t = {
+    size: 2, // UTF-16 on Windows
+    toString: function(buffer) {
+        // Convert buffer to UTF-16 string
+        return buffer.toString('utf16le');
+    }
+};
 
 function get_dll(){
     switch(os.arch()){
@@ -1385,21 +1393,9 @@ function modify_func(func){
         return koffi_func.apply(this, arguments);
     }
     
+    // Use koffi's built-in async support - this runs in worker threads
     $[func].async = function(){
-        var args = Array.prototype.slice.call(arguments);
-        var callback = args.pop(); // remove callback from args
-        
-        try {
-            var result = koffi_func.apply(this, args);
-            // Call callback with result in next tick to simulate async behavior
-            process.nextTick(function() {
-                callback(null, result);
-            });
-        } catch (err) {
-            process.nextTick(function() {
-                callback(err);
-            });
-        }
+        return koffi_func.async.apply(koffi_func, arguments);
     }
 }
 
@@ -1421,24 +1417,19 @@ function modify_def_args(func){
 
     $[func].async = function(){
         var args = Array.prototype.slice.call(arguments);
-        var callback = args.pop(); // remove callback from args
+        var callback = args[args.length - 1]; // callback is the last argument
         
+        // Apply default arguments (excluding the callback)
+        var syncArgs = args.slice(0, -1); // Remove callback from args for processing
         for(var i in get_args){
             var j = (return_arg >= 0 && i >= return_arg ? i - 1 : i);
-            while(j >= args.length) args.push(undefined);
-            if(args[j] === undefined) args[j] = get_args[i];
+            while(j >= syncArgs.length) syncArgs.push(undefined);
+            if(syncArgs[j] === undefined) syncArgs[j] = get_args[i];
         }
         
-        try {
-            var result = $[func].apply(this, args);
-            process.nextTick(function() {
-                callback(null, result);
-            });
-        } catch (err) {
-            process.nextTick(function() {
-                callback(err);
-            });
-        }
+        // Add callback back and call the underlying async function
+        syncArgs.push(callback);
+        return old_func.async.apply(this, syncArgs);
     }
 }
 
@@ -1486,20 +1477,8 @@ function modify_arg_to_return_value(func){
     }
 
     $[func].async = function(){
-        var args = Array.prototype.slice.call(arguments);
-        var callback = args.pop(); // remove callback from args
-        
-        try {
-            var result = $[func].apply(this, args);
-            // Call callback with result in next tick to simulate async behavior
-            process.nextTick(function() {
-                callback(null, result);
-            });
-        } catch (err) {
-            process.nextTick(function() {
-                callback(err);
-            });
-        }
+        // Delegate to the underlying function's async method which now uses real koffi async
+        return old_func.async.apply(this, arguments);
     }
 }
 
