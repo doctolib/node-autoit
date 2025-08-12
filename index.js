@@ -1374,7 +1374,6 @@ if (!autoit_lib) {
 }
 
 function modify_func(func){
-    console.log(`Modify func ${func} arguments: ${JSON.stringify(arguments)}`)
     var func_def = autoit_functions[func];
     var koffi_func = autoit_lib.func(func, func_def[0], func_def[1]);
     func = func.substr(4);   //Remove "AU3_"
@@ -1389,7 +1388,6 @@ function modify_func(func){
 }
 
 function modify_def_args(func){
-    console.log(`Modify def args ${func} arguments: ${JSON.stringify(arguments)}`)
     var old_func = $[func];
     var get_args = def_args[func];
 
@@ -1426,7 +1424,6 @@ function getWString(buf){
 }
 
 function modify_arg_to_return_value(func){
-    console.log(`modify_arg_to_return_value ${func} arguments: ${JSON.stringify(arguments)}`)
     var old_func = $[func];
     var get_ret = arg_to_return_value[func];
 
@@ -1503,7 +1500,6 @@ function modify_arg_to_return_value(func){
 }
 
 function modify_byhande_func(func){
-    console.log(`modify_byhande_func ${func} arguments: ${JSON.stringify(arguments)}`)
     func = func.substr(4);   //Remove "AU3_"
     var appendix = 'ByHandle';
     var is_byhandle = (func.length > appendix.length && func.substr(func.length - appendix.length) == appendix);
