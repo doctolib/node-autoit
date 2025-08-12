@@ -3,15 +3,8 @@
 var koffi = require('koffi');
 var path = require('path');
 var os = require('os');
+var wchar_t = require(path.join(__dirname, 'wchar.js'));
 
-// Simple wchar_t replacement for koffi (no ref-napi dependency)
-var wchar_t = {
-    size: 2, // UTF-16 on Windows
-    toString: function(buffer) {
-        // Convert buffer to UTF-16 string
-        return buffer.toString('utf16le');
-    }
-};
 
 function get_dll(){
     switch(os.arch()){
@@ -1366,26 +1359,22 @@ for (var i = 0; i < dllPaths.length; i++) {
     try {
         autoit_lib = koffi.load(dllPaths[i]);
         loadedFrom = dllPaths[i];
-        // console.log('AutoIt DLL loaded successfully from:', loadedFrom);
         break;
     } catch (err) {
         loadError = err;
-        console.warn('Failed to load DLL from:', dllPaths[i], '- Error:', err.message);
         continue;
     }
 }
 
 // If all attempts failed, throw error
 if (!autoit_lib) {
-    console.error('Failed to load AutoIt DLL from all attempted paths:');
     dllPaths.forEach(function(dllPath, index) {
-        console.error('  ' + (index + 1) + '. ' + dllPath);
     });
-    console.error('Last error:', loadError.message);
     throw new Error('AutoIt DLL could not be loaded from any location. Ensure the DLL exists and is accessible.');
 }
 
 function modify_func(func){
+    console.log(`Modify func ${func} arguments: ${JSON.stringify(arguments)}`)
     var func_def = autoit_functions[func];
     var koffi_func = autoit_lib.func(func, func_def[0], func_def[1]);
     func = func.substr(4);   //Remove "AU3_"
@@ -1395,17 +1384,19 @@ function modify_func(func){
     
     // Use koffi's built-in async support - this runs in worker threads
     $[func].async = function(){
-        return koffi_func.async.apply(koffi_func, arguments);
+        return koffi_func.async.apply(this, arguments);
     }
 }
 
 function modify_def_args(func){
+    console.log(`Modify def args ${func} arguments: ${JSON.stringify(arguments)}`)
     var old_func = $[func];
     var get_args = def_args[func];
-    var return_func = arg_to_return_value[func];
-    var return_arg = (return_func === undefined ? -1 : return_func.arg);
 
     $[func] = function(){
+        var return_func = arg_to_return_value[func];
+        var return_arg = (return_func === undefined ? -1 : return_func.arg);
+
         var args = Array.prototype.slice.call(arguments);
         for(var i in get_args){
             var j = (return_arg >= 0 && i >= return_arg ? i - 1 : i);
@@ -1417,19 +1408,11 @@ function modify_def_args(func){
 
     $[func].async = function(){
         var args = Array.prototype.slice.call(arguments);
-        var callback = args[args.length - 1]; // callback is the last argument
-        
-        // Apply default arguments (excluding the callback)
-        var syncArgs = args.slice(0, -1); // Remove callback from args for processing
         for(var i in get_args){
-            var j = (return_arg >= 0 && i >= return_arg ? i - 1 : i);
-            while(j >= syncArgs.length) syncArgs.push(undefined);
-            if(syncArgs[j] === undefined) syncArgs[j] = get_args[i];
+            while(i >= args.length) args.push(undefined);
+            if(args[i] === undefined) args[i] = get_args[i];
         }
-        
-        // Add callback back and call the underlying async function
-        syncArgs.push(callback);
-        return old_func.async.apply(this, syncArgs);
+        return old_func.async.apply(this, args);
     }
 }
 
@@ -1443,6 +1426,7 @@ function getWString(buf){
 }
 
 function modify_arg_to_return_value(func){
+    console.log(`modify_arg_to_return_value ${func} arguments: ${JSON.stringify(arguments)}`)
     var old_func = $[func];
     var get_ret = arg_to_return_value[func];
 
@@ -1477,12 +1461,49 @@ function modify_arg_to_return_value(func){
     }
 
     $[func].async = function(){
-        // Delegate to the underlying function's async method which now uses real koffi async
-        return old_func.async.apply(this, arguments);
+        if(get_ret.type == 'wstring'){
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args[args.length - 1];
+            args.splice(get_ret.arg, 0, undefined);
+            var nBufSize = args[get_ret.ex_arg];
+            var buf = Buffer.alloc(wchar_t.size * nBufSize);
+            args[get_ret.arg] = buf;
+
+            args[args.length - 1] = function(err){
+                if(err) callback(err)
+                else callback(err, getWString(buf));
+            }
+            return old_func.async.apply(this, args);
+        } else if(get_ret.type == 'rect'){
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args[args.length - 1];
+            args.splice(get_ret.arg, 0, undefined);
+            var rect = koffi.alloc(RECT, 1); // Allocate struct buffer
+            args[get_ret.arg] = rect;
+
+            args[args.length - 1] = function(err){
+                if(err) callback(err)
+                else callback(err, koffi.decode(rect, RECT));
+            }
+            return old_func.async.apply(this, args);
+        } else if(get_ret.type == 'point'){
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args[args.length - 1];
+            args.splice(get_ret.arg, 0, undefined);
+            var point = koffi.alloc(POINT, 1); // Allocate struct buffer
+            args[get_ret.arg] = point;
+
+            args[args.length - 1] = function(err){
+                if(err) callback(err)
+                else callback(err, koffi.decode(point, POINT));
+            }
+            return old_func.async.apply(this, args);
+        }
     }
 }
 
 function modify_byhande_func(func){
+    console.log(`modify_byhande_func ${func} arguments: ${JSON.stringify(arguments)}`)
     func = func.substr(4);   //Remove "AU3_"
     var appendix = 'ByHandle';
     var is_byhandle = (func.length > appendix.length && func.substr(func.length - appendix.length) == appendix);
@@ -1509,12 +1530,7 @@ function modify_byhande_func(func){
 
 
 for(var func in autoit_functions){
-    try {
-        modify_func(func);
-    } catch (error) {
-        console.error(`Error creating function ${func}:`, error.message);
-        throw error;
-    }
+    modify_func(func);
 }
 for(var func in arg_to_return_value){
     modify_arg_to_return_value(func);
@@ -1549,11 +1565,6 @@ $.GetDlgCtrlID = user32dll.func('GetDlgCtrlID', 'int', [HWND]);
 $.RECT = function() { return koffi.alloc(RECT, 1); };
 $.POINT = function() { return koffi.alloc(POINT, 1); };
 
-// Export raw struct definitions for advanced use
-$.RECT_TYPE = RECT;
-$.POINT_TYPE = POINT;
-
-// Export wchar_t for direct access if needed
-$.wchar_t = wchar_t;
+$.user32dll_handle = user32dll;
 
 module.exports = $;
