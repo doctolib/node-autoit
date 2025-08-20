@@ -1013,7 +1013,7 @@ var autoit_functions = {
     //AU3_API void WINAPI AU3_ControlGetFocus(LPCWSTR szTitle, LPCWSTR szText, LPWSTR szControlWithFocus, int nBufSize);
     'AU3_ControlGetFocusByHandle': ['void', [HWND, LPWSTR, 'int']],
     //AU3_API void WINAPI AU3_ControlGetFocusByHandle(HWND hWnd, LPWSTR szControlWithFocus, int nBufSize);
-    'AU3_ControlGetHandle': ['int', [HWND, LPCWSTR]],
+    'AU3_ControlGetHandle': [HWND, [HWND, LPCWSTR]],
     //AU3_API HWND WINAPI AU3_ControlGetHandle(HWND hWnd, LPCWSTR szControl);
     'AU3_ControlGetHandleAsText': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPCWSTR, LPWSTR, 'int']],
     //AU3_API void WINAPI AU3_ControlGetHandleAsText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPCWSTR szControl, LPWSTR szRetText, int nBufSize);
