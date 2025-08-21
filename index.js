@@ -1080,7 +1080,7 @@ var autoit_functions = {
     'AU3_Opt': ['int', [LPCWSTR, 'int']],
     //AU3_API int WINAPI AU3_Opt(LPCWSTR szOption, int nValue);
 
-    'AU3_PixelChecksum': ['uint32', [LPRECT, 'int']],
+    'AU3_PixelChecksum': [DWORD, [LPRECT, 'int']],
     //AU3_API unsigned int WINAPI AU3_PixelChecksum(LPRECT lpRect, int nStep = 1);
     'AU3_PixelGetColor': ['int', ['int', 'int']],
     //AU3_API int WINAPI AU3_PixelGetColor(int nX, int nY);
@@ -1146,7 +1146,7 @@ var autoit_functions = {
     //AU3_API int WINAPI AU3_WinGetClientSize(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPRECT lpRect);
     'AU3_WinGetClientSizeByHandle': ['int', [HWND, LPRECT]],
     //AU3_API int WINAPI AU3_WinGetClientSizeByHandle(HWND hWnd, LPRECT lpRect);
-    'AU3_WinGetHandle': ['int', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
+    'AU3_WinGetHandle': [HWND, [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
     //AU3_API HWND WINAPI AU3_WinGetHandle(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
     'AU3_WinGetHandleAsText': ['void', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR, LPWSTR, 'int']],
     //AU3_API void WINAPI AU3_WinGetHandleAsText(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPWSTR szRetText, int nBufSize);
@@ -1154,7 +1154,7 @@ var autoit_functions = {
     //AU3_API int WINAPI AU3_WinGetPos(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText, LPRECT lpRect);
     'AU3_WinGetPosByHandle': ['int', [HWND, LPRECT]],
     //AU3_API int WINAPI AU3_WinGetPosByHandle(HWND hWnd, LPRECT lpRect);
-    'AU3_WinGetProcess': ['uint32', [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
+    'AU3_WinGetProcess': [DWORD, [LPCWSTR, /*[in,defaultvalue("")]*/LPCWSTR]],
     //AU3_API DWORD WINAPI AU3_WinGetProcess(LPCWSTR szTitle, /*[in,defaultvalue("")]*/LPCWSTR szText);
     'AU3_WinGetProcessByHandle': ['uint32', [HWND]],
     //AU3_API DWORD WINAPI AU3_WinGetProcessByHandle(HWND hWnd);
