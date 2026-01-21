@@ -1431,43 +1431,53 @@ function modify_arg_to_return_value(func){
             console.log('unknown return type ' + get_ret.type);
     }
 
+    // Helper to find and extract callback from args (may not be at end due to default args)
+    function extractCallback(args) {
+        for (var i = args.length - 1; i >= 0; i--) {
+            if (typeof args[i] === 'function') {
+                return args.splice(i, 1)[0];
+            }
+        }
+        return null;
+    }
+
     $[func].async = function(){
         if(get_ret.type == 'wstring'){
             var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
+            var callback = extractCallback(args);
             args.splice(get_ret.arg, 0, undefined);
             var nBufSize = args[get_ret.ex_arg];
             var buf = Buffer.alloc(wchar_t.size * nBufSize);
             args[get_ret.arg] = buf;
 
-            args[args.length - 1] = function(err){
+            args.push(function(err){
                 if(err) callback(err)
                 else callback(err, getWString(buf));
-            }
+            });
             return old_func.async.apply(this, args);
         } else if(get_ret.type == 'rect'){
             var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
+            var callback = extractCallback(args);
             args.splice(get_ret.arg, 0, undefined);
             var rect = koffi.alloc(RECT, 1); // Allocate struct buffer
             args[get_ret.arg] = rect;
 
-            args[args.length - 1] = function(err){
+            args.push(function(err){
                 if(err) callback(err)
                 else callback(err, koffi.decode(rect, RECT));
-            }
+            });
             return old_func.async.apply(this, args);
         } else if(get_ret.type == 'point'){
             var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
+            var callback = extractCallback(args);
             args.splice(get_ret.arg, 0, undefined);
             var point = koffi.alloc(POINT, 1); // Allocate struct buffer
             args[get_ret.arg] = point;
 
-            args[args.length - 1] = function(err){
+            args.push(function(err){
                 if(err) callback(err)
                 else callback(err, koffi.decode(point, POINT));
-            }
+            });
             return old_func.async.apply(this, args);
         }
     }

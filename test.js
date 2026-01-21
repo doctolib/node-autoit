@@ -95,7 +95,8 @@ try {
     var startTime = Date.now();
     
     // This should not block - we're waiting for a window that doesn't exist
-    au.WinWaitActive.async("NonExistentWindow12345", "", 2000, function(err, result) {
+    // Note: timeout is in SECONDS, not milliseconds
+    au.WinWaitActive.async("NonExistentWindow12345", "", 2, function(err, result) {
         var endTime = Date.now();
         console.log('   ✓ Async WinWaitActive completed after', endTime - startTime, 'ms');
         console.log('   Result:', result, '(0 = timeout, which is expected)');

@@ -90,6 +90,6 @@ try {
         console.log('   Check that all function type definitions use string types');
     } else if (error.message.includes('Cannot find module')) {
         console.log('\n💡 Missing dependency. Try running:');
-        console.log('   npm install ffi-napi ref-napi ref-struct-di');
+        console.log('   npm install koffi iconv-lite');
     }
 } 
