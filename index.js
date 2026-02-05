@@ -1340,10 +1340,12 @@ var dll = get_dll();
 if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
-var autoit_lib = koffi.load(path.join(process.cwd(), dll));
+var autoit_lib;
 
-// If all attempts failed, try to load from the package directory
-if (!autoit_lib) {
+try {
+    autoit_lib = koffi.load(path.join(process.cwd(), dll));
+} catch (e) {
+    // Fallback to package directory
     autoit_lib = koffi.load(path.join(__dirname, dll));
 }
 
