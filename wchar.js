@@ -86,7 +86,6 @@ exports.string.get = function get(buf, offset) {
   // For direct buffer access (not pointer dereferencing)
   // Read wide string from buffer until null terminator
   offset = offset | 0;
-  var result = [];
   for (var i = offset; i < buf.length; i += size) {
     var isNull = true;
     for (var j = 0; j < size; j++) {

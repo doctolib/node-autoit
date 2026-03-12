@@ -1346,7 +1346,15 @@ try {
     autoit_lib = koffi.load(path.join(process.cwd(), dll));
 } catch (e) {
     // Fallback to package directory
-    autoit_lib = koffi.load(path.join(__dirname, dll));
+    try {
+        autoit_lib = koffi.load(path.join(__dirname, dll));
+    } catch (e2) {
+        throw new Error(
+            'Failed to load AutoIt DLL from both cwd and package directory.\n' +
+            'cwd error: ' + e.message + '\n' +
+            'package dir error: ' + e2.message
+        );
+    }
 }
 
 function modify_func(func){
@@ -1433,7 +1441,10 @@ function modify_arg_to_return_value(func){
             console.log('unknown return type ' + get_ret.type);
     }
 
-    // Helper to find and extract callback from args (may not be at end due to default args)
+    // Helper to find and extract the callback from args by scanning in reverse.
+    // Assumption: the last function-typed argument is always the callback.
+    // We scan in reverse (rather than forward) to correctly skip default args
+    // that may appear after the callback position in the function signature.
     function extractCallback(args) {
         for (var i = args.length - 1; i >= 0; i--) {
             if (typeof args[i] === 'function') {
@@ -1447,6 +1458,7 @@ function modify_arg_to_return_value(func){
         if(get_ret.type == 'wstring'){
             var args = Array.prototype.slice.call(arguments);
             var callback = extractCallback(args);
+            if (!callback) throw new TypeError('callback is required for async calls');
             args.splice(get_ret.arg, 0, undefined);
             var nBufSize = args[get_ret.ex_arg];
             var buf = Buffer.alloc(wchar_t.size * nBufSize);
@@ -1460,6 +1472,7 @@ function modify_arg_to_return_value(func){
         } else if(get_ret.type == 'rect'){
             var args = Array.prototype.slice.call(arguments);
             var callback = extractCallback(args);
+            if (!callback) throw new TypeError('callback is required for async calls');
             args.splice(get_ret.arg, 0, undefined);
             var rect = koffi.alloc(RECT, 1); // Allocate struct buffer
             args[get_ret.arg] = rect;
@@ -1472,6 +1485,7 @@ function modify_arg_to_return_value(func){
         } else if(get_ret.type == 'point'){
             var args = Array.prototype.slice.call(arguments);
             var callback = extractCallback(args);
+            if (!callback) throw new TypeError('callback is required for async calls');
             args.splice(get_ret.arg, 0, undefined);
             var point = koffi.alloc(POINT, 1); // Allocate struct buffer
             args[get_ret.arg] = point;
