@@ -1340,11 +1340,21 @@ var dll = get_dll();
 if(dll === null)
     throw new Error('autoit can not run on this platform!');
 
-var autoit_lib = koffi.load(path.join(process.cwd(), dll));
+var autoit_lib;
 
-// If all attempts failed, try to load from the package directory
-if (!autoit_lib) {
-    autoit_lib = koffi.load(path.join(__dirname, dll));
+try {
+    autoit_lib = koffi.load(path.join(process.cwd(), dll));
+} catch (e) {
+    // Fallback to package directory
+    try {
+        autoit_lib = koffi.load(path.join(__dirname, dll));
+    } catch (e2) {
+        throw new Error(
+            'Failed to load AutoIt DLL from both cwd and package directory.\n' +
+            'cwd error: ' + e.message + '\n' +
+            'package dir error: ' + e2.message
+        );
+    }
 }
 
 function modify_func(func){
@@ -1431,43 +1441,59 @@ function modify_arg_to_return_value(func){
             console.log('unknown return type ' + get_ret.type);
     }
 
+    // Helper to find and extract the callback from args by scanning in reverse.
+    // Assumption: the last function-typed argument is always the callback.
+    // We scan in reverse (rather than forward) to correctly skip default args
+    // that may appear after the callback position in the function signature.
+    function extractCallback(args) {
+        for (var i = args.length - 1; i >= 0; i--) {
+            if (typeof args[i] === 'function') {
+                return args.splice(i, 1)[0];
+            }
+        }
+        return null;
+    }
+
     $[func].async = function(){
         if(get_ret.type == 'wstring'){
             var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
+            var callback = extractCallback(args);
+            if (!callback) throw new TypeError('callback is required for async calls');
             args.splice(get_ret.arg, 0, undefined);
             var nBufSize = args[get_ret.ex_arg];
             var buf = Buffer.alloc(wchar_t.size * nBufSize);
             args[get_ret.arg] = buf;
 
-            args[args.length - 1] = function(err){
+            args.push(function(err){
                 if(err) callback(err)
                 else callback(err, getWString(buf));
-            }
+            });
             return old_func.async.apply(this, args);
         } else if(get_ret.type == 'rect'){
             var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
+            var callback = extractCallback(args);
+            if (!callback) throw new TypeError('callback is required for async calls');
             args.splice(get_ret.arg, 0, undefined);
             var rect = koffi.alloc(RECT, 1); // Allocate struct buffer
             args[get_ret.arg] = rect;
 
-            args[args.length - 1] = function(err){
+            args.push(function(err){
                 if(err) callback(err)
                 else callback(err, koffi.decode(rect, RECT));
-            }
+            });
             return old_func.async.apply(this, args);
         } else if(get_ret.type == 'point'){
             var args = Array.prototype.slice.call(arguments);
-            var callback = args[args.length - 1];
+            var callback = extractCallback(args);
+            if (!callback) throw new TypeError('callback is required for async calls');
             args.splice(get_ret.arg, 0, undefined);
             var point = koffi.alloc(POINT, 1); // Allocate struct buffer
             args[get_ret.arg] = point;
 
-            args[args.length - 1] = function(err){
+            args.push(function(err){
                 if(err) callback(err)
                 else callback(err, koffi.decode(point, POINT));
-            }
+            });
             return old_func.async.apply(this, args);
         }
     }
